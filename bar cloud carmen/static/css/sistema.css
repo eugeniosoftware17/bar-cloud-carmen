@@ -1,0 +1,81 @@
+/* Bar Cloud · ajustes del sistema Django sobre estilos.css (diseño Nuevo) */
+
+/* fotos de producto en lugar del dibujo */
+.tarjeta .img img{height:100%;width:100%;object-fit:contain}
+td .mini2 img,.linea .mini img{height:100%;width:100%;object-fit:cover;border-radius:6px}
+
+/* enlaces y botones-enlace */
+a.btn{text-decoration:none;color:inherit}
+a.btn.prim{color:var(--sobre-tinta)}
+.vacio a,.ayuda a{color:inherit;font-weight:600}
+.enlace-fila{color:inherit;text-decoration:none}
+.enlace-fila:hover{text-decoration:underline}
+
+/* formularios en ventanas */
+.modal .fila2{display:grid;grid-template-columns:1fr 1.25fr;gap:10px}
+.modal select{height:50px;font-size:17px}
+.modal input[type=color]{padding:4px;cursor:pointer}
+.modal input[type=file]{font-size:14px;padding:12px;height:auto}
+.modal .check input{width:20px;height:20px}
+.campo-error{font-size:13px;font-weight:600;margin-top:6px}
+.campo-error::before{content:"! "}
+.modal .ayuda b{color:var(--texto)}
+.modal .campos2>div>a,.modal .campos2>div>input[type=checkbox]{font-size:13px}
+.modal .campos2 label[for$="-clear_id"]{display:inline;font-weight:500;font-size:13px}
+
+/* tarjetas de venta directa */
+.tarjeta{position:relative}
+.tarjeta.agotado{opacity:.5;cursor:not-allowed}
+.tarjeta.agotado:hover{transform:none}
+
+/* configuración */
+.config-cols{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+.config-campos{display:flex;flex-direction:column;gap:14px}
+.config .tarj select{width:100%;height:50px;border:1px solid var(--borde2);border-radius:12px;padding:0 12px;font:inherit;background:var(--panel);color:var(--texto)}
+.config .tarj input:disabled{opacity:.45;cursor:not-allowed}
+.config .check input{width:20px;height:20px;accent-color:var(--tinta)}
+.config-cargo{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--borde)}
+.config-cargo:last-of-type{border-bottom:0}
+.config-cargo .check{margin:0}
+.config-porc{display:flex;align-items:center;gap:6px;font-weight:600}
+.tarj .config-porc input{width:96px;height:44px;font-size:17px;text-align:right}
+.config-vista{position:sticky;top:12px}
+.ticket{background:#fff;color:#000;border:1px dashed var(--borde2);border-radius:8px;padding:14px 12px;font:12px/1.4 "Courier New",monospace}
+.ticket .c{display:block;text-align:center}
+.ticket .t{font-weight:700;font-size:14px}
+.ticket hr{border:0;border-top:1px dashed #000;margin:6px 0}
+.ticket .f{display:flex;justify-content:space-between;gap:8px}
+.ticket .f span:last-child{white-space:nowrap}
+@media (max-width:1180px){.config-cols{grid-template-columns:1fr}.config-vista{position:static}}
+
+/* pestañas que son enlaces (Ventas: Historial / Cierre) */
+.pestanas-enlace{align-self:flex-start}
+.pestanas-enlace a.pestana{text-decoration:none;color:inherit}
+.pestanas-enlace a.pestana.activo{color:var(--sobre-tinta)}
+
+/* cierre del día */
+.cierre-dif{font-size:22px!important}
+.cierre-dif.falta,.cierre-dif.sobra{background:var(--tinta);color:var(--sobre-tinta)}
+.cierre-acciones{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tarj .campos2 input{font-size:19px}
+.tarj textarea{width:100%;min-height:60px;border:1px solid var(--borde2);border-radius:12px;padding:10px 12px;font:inherit;background:var(--panel);color:var(--texto);resize:vertical}
+
+.acciones-fila{white-space:nowrap}
+.acciones-fila .btn+.btn{margin-left:6px}
+
+/* mesas */
+.mesa .cab{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.mesa{cursor:pointer;font:inherit;color:inherit}
+
+/* permisos de usuarios */
+.permisos-cab{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:18px 0 8px}
+.permisos-cab h3{font-size:16px}
+.permisos-atajos{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.permisos td,.permisos th{padding:10px 12px}
+.permisos .c{text-align:center;width:110px}
+.permiso-op{display:inline-grid;place-items:center;width:40px;height:40px;cursor:pointer;margin:0!important}
+.modal .permiso-op input{width:20px;height:20px;accent-color:var(--tinta);cursor:pointer}
+.modal .permiso-op input:disabled{cursor:not-allowed}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.permisos-resumen{max-width:340px;white-space:normal}
+@media (max-width:640px){.permisos .c{width:auto}.permisos th.c{font-size:10px}}

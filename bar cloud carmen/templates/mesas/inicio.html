@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static productos %}
+
+{% block app_clase %}{% endblock %}
+
+{% block contenido %}
+<main class="pagina">
+  <div class="pag-cab">
+    <h1>Mesas</h1><span class="esp"></span>
+    <div class="leyenda"><span class="badge">Libres <b id="nLibres">{{ frag.libres }}</b></span><span class="badge b-agotado">Ocupadas <b id="nOcupadas">{{ frag.ocupadas }}</b></span></div>
+    {% if PUEDE.mesas.editar %}<button type="button" class="btn sec peq" id="btnMesa">+ Agregar mesa</button>{% endif %}
+  </div>
+  <div class="mesas-grid" id="grid">{{ frag.grid|safe }}</div>
+</main>
+<section class="cuenta" id="cuenta" aria-label="Cuenta de la mesa">{{ frag.cuenta|safe }}</section>
+<div class="fondo-panel" id="fondoPanel"></div>
+
+{# productos para la ventana "Agregar consumo" #}
+<template id="plantillaPicker">
+  <div class="picker-cab">
+    <label class="buscador"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="pkQ" type="search" placeholder="Buscar productos…" autocomplete="off"></label>
+    <div class="pestanas" id="pkTabs" style="padding:6px">
+      {% for c in categorias %}<button type="button" class="pestana{% if c.pk == categoria_inicial %} activo{% endif %}" data-cat="{{ c.pk }}">{{ c }}</button>{% endfor %}
+    </div>
+  </div>
+  <div class="picker" id="pkGrid">
+    {% for p in productos %}
+    <button type="button" class="tarjeta{% if p.estado_stock == 'agotado' %} agotado{% endif %}" data-id="{{ p.pk }}" data-cat="{{ p.categoria_id }}" data-nombre="{{ p.nombre|lower }}">
+      <div class="img">{% imagen_producto p %}</div>
+      <div class="nombre">{{ p.nombre }}</div>
+      <div class="fila"><span class="precio">{{ p.precio|dinero }}</span></div>
+      <span class="cuantos" hidden></span>
+      {% if p.estado_stock == 'agotado' %}<span class="tag">Agotado</span>{% endif %}
+    </button>
+    {% empty %}
+    <p class="vacio">Todavía no hay productos.</p>
+    {% endfor %}
+  </div>
+  <p class="vacio" id="pkVacio" hidden>Sin resultados.</p>
+</template>
+
+<div id="config" hidden
+     data-sel="{{ sel|default:'' }}"
+     data-csrf="{{ csrf_token }}"
+     data-estado="{% url 'mesas:estado' %}"
+     data-nueva="{% url 'mesas:nueva' %}"
+     data-base="{% url 'mesas:inicio' %}"
+     data-en-cuenta="{{ en_cuenta_json }}"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/caja.js' %}"></script>
+<script src="{% static 'js/mesas.js' %}"></script>
+{% endblock %}

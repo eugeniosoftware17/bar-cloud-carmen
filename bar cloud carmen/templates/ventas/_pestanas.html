@@ -1,0 +1,4 @@
+<nav class="pestanas pestanas-enlace" aria-label="Secciones de ventas">
+  <a class="pestana{% if seccion == 'historial' %} activo{% endif %}" href="{% url 'ventas:inicio' %}"{% if seccion == 'historial' %} aria-current="page"{% endif %}>Historial</a>
+  <a class="pestana{% if seccion == 'cierre' %} activo{% endif %}" href="{% url 'ventas:cierre' %}"{% if seccion == 'cierre' %} aria-current="page"{% endif %}>Cierre del día</a>
+</nav>

@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load productos %}
+
+{% block contenido %}
+<main class="pagina">
+  <div class="pag-cab">
+    <h1>Productos</h1><span class="esp"></span>
+    {% if admin %}<a class="btn prim peq" href="{% url 'productos:nuevo' %}{% if request.GET.urlencode %}?volver=?{{ request.GET.urlencode|urlencode }}{% endif %}">+ Nuevo producto</a>
+    {% else %}<p>Consulta de productos y precios. Para cambiarlos se necesita el usuario Administrador.</p>{% endif %}
+  </div>
+
+  <form class="filtros" method="get" action="{% url 'productos:inicio' %}" id="filtros">
+    <label class="buscador">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input name="q" data-buscador type="search" placeholder="Buscar productos…" autocomplete="off" value="{{ filtros.q }}">
+    </label>
+    <select class="campo-sel" name="cat" aria-label="Categoría">
+      <option value="">Todas las categorías</option>
+      {% for c in categorias %}<option value="{{ c.pk }}"{% if filtros.cat == c.pk|stringformat:'s' %} selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+    <select class="campo-sel" name="estado" aria-label="Estado">
+      {% for valor, texto in estados %}<option value="{{ valor }}"{% if filtros.estado == valor %} selected{% endif %}>{{ texto }}</option>{% endfor %}
+    </select>
+    <noscript><button class="btn sec peq">Filtrar</button></noscript>
+  </form>
+
+  <div class="tabla-caja">
+    <table>
+      <thead><tr>
+        <th>Producto</th><th>Categoría</th><th class="num">Precio</th>
+        {% if admin %}<th class="num">Costo</th><th class="num">Margen</th>{% endif %}
+        <th class="num">Stock</th><th>Estado</th>
+      </tr></thead>
+      <tbody>
+        {% for p in productos %}
+        <tr{% if admin %} class="clic" data-href="{% url 'productos:editar' p.pk %}{% if request.GET.urlencode %}?volver=?{{ request.GET.urlencode|urlencode }}{% endif %}"{% endif %}>
+          <td><span class="mini2">{% imagen_producto p %}</span>{% if admin %}<a class="nom enlace-fila" href="{% url 'productos:editar' p.pk %}">{{ p.nombre }}</a>{% else %}<span class="nom">{{ p.nombre }}</span>{% endif %}</td>
+          <td>{{ p.categoria }}</td>
+          <td class="num">{{ p.precio|dinero }}</td>
+          {% if admin %}<td class="num">{{ p.costo|dinero }}</td><td class="num">{{ p.margen }}%</td>{% endif %}
+          <td class="num">{% if p.controla_stock %}{{ p.stock }}{% else %}—{% endif %}</td>
+          <td>{% estado_producto p %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="{% if admin %}7{% else %}5{% endif %}" class="vacio-tabla">
+          {% if hay_filtros %}No hay productos con ese filtro.{% elif admin %}Todavía no hay productos. Toca <b>+ Nuevo producto</b> para agregar el primero.{% else %}Todavía no hay productos registrados.{% endif %}
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="nota-pie">Los productos no se borran: se desactivan para conservar el historial de ventas.</p>
+</main>
+
+{% if form %}
+<div class="velo" id="veloProducto">
+  <form class="modal ancho" role="dialog" aria-modal="true" aria-labelledby="tituloProducto" method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="volver" value="{{ volver }}">
+    <h2 id="tituloProducto">{% if producto %}Editar producto{% else %}Nuevo producto{% endif %}</h2>
+    <div class="cuerpo">
+      {% if form.non_field_errors %}<div class="alerta">{{ form.non_field_errors|join:' ' }}</div>{% endif %}
+      {% include 'productos/_campo.html' with f=form.nombre %}
+      <div class="campos2">
+        <div>{% include 'productos/_campo.html' with f=form.categoria %}</div>
+        <div>{% include 'productos/_campo.html' with f=form.dibujo %}</div>
+        <div>{% include 'productos/_campo.html' with f=form.precio label='Precio de venta (RD$)' %}</div>
+        <div>{% include 'productos/_campo.html' with f=form.costo label='Costo de compra (RD$)' %}</div>
+        {% if form.stock_inicial %}<div>{% include 'productos/_campo.html' with f=form.stock_inicial %}</div>{% endif %}
+        <div>{% include 'productos/_campo.html' with f=form.stock_minimo label='Avisar cuando queden' %}</div>
+        <div>{% include 'productos/_campo.html' with f=form.color %}</div>
+        <div>{% include 'productos/_campo.html' with f=form.foto %}</div>
+      </div>
+      {% if producto %}<p class="ayuda">Stock actual: <b>{% if producto.controla_stock %}{{ producto.stock }}{% else %}no controlado{% endif %}</b>. Se cambia con entradas y salidas en Inventario.</p>{% endif %}
+      <label class="check">{{ form.controla_stock }} Controlar inventario de este producto</label>
+      <p class="ayuda">{{ form.controla_stock.help_text }}</p>
+      <label class="check">{{ form.activo }} Activo (aparece para vender)</label>
+    </div>
+    <div class="acciones fila2">
+      <a class="btn sec" href="{% url 'productos:inicio' %}{{ volver }}" id="cancelarProducto">Cancelar</a>
+      <button class="btn prim" type="submit">Guardar</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  // filtros: se aplican solos al escribir o cambiar
+  var f = document.getElementById('filtros'), t;
+  f.querySelectorAll('select').forEach(function (s) { s.addEventListener('change', function () { f.submit(); }); });
+  var q = f.querySelector('[name=q]');
+  q.addEventListener('input', function () { clearTimeout(t); t = setTimeout(function () { f.submit(); }, 400); });
+  if (q.value) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+  // toda la fila abre el producto
+  document.querySelectorAll('tr[data-href]').forEach(function (tr) {
+    tr.addEventListener('click', function (e) { if (!e.target.closest('a')) location.href = tr.dataset.href; });
+  });
+  // ventana: Esc o clic fuera cierra
+  var velo = document.getElementById('veloProducto');
+  if (velo) {
+    document.body.classList.add('sin-scroll');
+    var cancelar = document.getElementById('cancelarProducto');
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') location.href = cancelar.href; });
+    velo.addEventListener('mousedown', function (e) { if (e.target === velo) location.href = cancelar.href; });
+    var err = velo.querySelector('.campo-error');
+    if (err) { var i = err.parentNode.querySelector('input,select'); if (i) i.focus(); }
+  }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load productos %}
+
+{% block contenido %}
+<main class="pagina">
+  <div class="pag-cab">
+    <h1>Proveedores</h1><span class="esp"></span>
+    {% if PUEDE.proveedores.editar %}<a class="btn prim peq" href="{% url 'proveedores:nuevo' %}">+ Nuevo proveedor</a>{% endif %}
+    <p>Quién te surte cada producto. Las entradas de inventario se pueden asociar a un proveedor.</p>
+  </div>
+
+  <form class="filtros" method="get" action="{% url 'proveedores:inicio' %}" id="filtros">
+    <label class="buscador">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input name="q" data-buscador type="search" placeholder="Buscar proveedores o productos que suplen…" autocomplete="off" value="{{ q }}">
+    </label>
+  </form>
+
+  <div class="tabla-caja">
+    <table>
+      <thead><tr><th>Proveedor</th><th>Contacto</th><th>Teléfono</th><th>Suple</th><th class="num">Compras registradas</th><th>Última entrada</th></tr></thead>
+      <tbody>
+        {% for v in proveedores %}
+        <tr class="clic" data-href="{% if PUEDE.proveedores.editar %}{% url 'proveedores:editar' v.pk %}{% endif %}">
+          <td>{% if PUEDE.proveedores.editar %}<a class="nom enlace-fila" href="{% url 'proveedores:editar' v.pk %}">{{ v.nombre }}</a>{% else %}<span class="nom">{{ v.nombre }}</span>{% endif %}{% if v.nota %}<div class="sub">{{ v.nota }}</div>{% endif %}</td>
+          <td>{{ v.contacto|default:"—" }}</td>
+          <td>{% if v.telefono %}<a class="enlace-fila" href="tel:{{ v.telefono }}">{{ v.telefono }}</a>{% else %}—{% endif %}</td>
+          <td>{{ v.suple|default:"—" }}</td>
+          <td class="num">{{ v.compras|dinero }}</td>
+          <td>{% if v.ultima %}{{ v.ultima|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="vacio-tabla">{% if q %}No hay proveedores con ese filtro.{% elif PUEDE.proveedores.editar %}Todavía no hay proveedores. Toca <b>+ Nuevo proveedor</b>.{% else %}Todavía no hay proveedores.{% endif %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="nota-pie">"Compras registradas" suma las entradas de Inventario hechas con ese proveedor (cantidad × costo).</p>
+</main>
+
+{% if modo %}
+<div class="velo" id="veloProv">
+  {% if modo == 'eliminar' %}
+  <form class="modal" role="dialog" aria-modal="true" aria-labelledby="tituloProv" method="post" action="{% url 'proveedores:eliminar' proveedor.pk %}">
+    {% csrf_token %}
+    <h2 id="tituloProv">Eliminar proveedor</h2>
+    <div class="cuerpo"><p class="mmetodo">Se elimina a <b>{{ proveedor.nombre }}</b>. Sus entradas de inventario se conservan, pero sin proveedor. No se puede deshacer.</p></div>
+    <div class="acciones fila2">
+      <a class="btn sec" href="{% url 'proveedores:editar' proveedor.pk %}" data-cerrar>Volver</a>
+      <button class="btn prim" type="submit">Eliminar</button>
+    </div>
+  </form>
+  {% else %}
+  <form class="modal ancho" role="dialog" aria-modal="true" aria-labelledby="tituloProv" method="post" novalidate>
+    {% csrf_token %}
+    <h2 id="tituloProv">{% if modo == 'nuevo' %}Nuevo proveedor{% else %}Editar proveedor{% endif %}</h2>
+    <div class="cuerpo">
+      {% include 'productos/_campo.html' with f=form.nombre %}
+      <div class="campos2">
+        <div>{% include 'productos/_campo.html' with f=form.contacto %}</div>
+        <div>{% include 'productos/_campo.html' with f=form.telefono %}</div>
+      </div>
+      {% include 'productos/_campo.html' with f=form.suple %}
+      {% include 'productos/_campo.html' with f=form.nota %}
+      {% if ultimas %}
+      <label>Últimas entradas</label>
+      <div class="tabla-caja" style="box-shadow:none"><table><tbody>
+        {% for m in ultimas %}<tr><td>{{ m.fecha|date:"d/m/Y" }}</td><td>{{ m.producto.nombre }}</td><td class="num">+{{ m.cantidad }}</td><td class="num">{{ m.costo|dinero }} c/u</td></tr>{% endfor %}
+      </tbody></table></div>
+      {% endif %}
+      {% if modo == 'editar' %}<p style="margin-top:14px"><a class="btn peligro fino" href="{% url 'proveedores:eliminar' proveedor.pk %}">Eliminar proveedor</a></p>{% endif %}
+    </div>
+    <div class="acciones fila2">
+      <a class="btn sec" href="{% url 'proveedores:inicio' %}" data-cerrar>Cancelar</a>
+      <button class="btn prim" type="submit">Guardar</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var f = document.getElementById('filtros'), t, q = f.querySelector('[name=q]');
+  q.addEventListener('input', function () { clearTimeout(t); t = setTimeout(function () { f.submit(); }, 400); });
+  if (q.value) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+  document.querySelectorAll('tr[data-href]').forEach(function (tr) {
+    if (!tr.dataset.href) { tr.classList.remove('clic'); return; }
+    tr.addEventListener('click', function (e) { if (!e.target.closest('a')) location.href = tr.dataset.href; });
+  });
+  var velo = document.getElementById('veloProv');
+  if (!velo) return;
+  document.body.classList.add('sin-scroll');
+  var cerrar = velo.querySelector('[data-cerrar]');
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') location.href = cerrar.href; });
+  velo.addEventListener('mousedown', function (e) { if (e.target === velo) location.href = cerrar.href; });
+})();
+</script>
+{% endblock %}

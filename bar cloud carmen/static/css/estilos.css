@@ -1,0 +1,465 @@
+/* Bar Cloud · Venta directa · blanco y negro (sin azules) */
+:root{
+  --fondo:#f4f4f5; --panel:#ffffff; --panel2:#f1f1f2; --borde:#e4e4e7; --borde2:#d4d4d8;
+  --texto:#18181b; --suave:#71717a; --tinta:#18181b; --sobre-tinta:#ffffff;
+  --sombra:0 1px 2px rgba(0,0,0,.05); --radio:14px;
+  --lateral:#fafafa;
+}
+[data-tema="oscuro"]{
+  --fondo:#0e0e10; --panel:#18181b; --panel2:#232326; --borde:#2e2e33; --borde2:#3f3f46;
+  --texto:#f4f4f5; --suave:#a1a1aa; --tinta:#f4f4f5; --sobre-tinta:#111113;
+  --sombra:none; --lateral:#131315;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--fondo);color:var(--texto);font-size:15px;-webkit-font-smoothing:antialiased}
+svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid var(--tinta);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:250px minmax(0,1fr) 380px;height:100vh;height:100dvh}
+
+/* ---------- lateral ---------- */
+.lateral{background:var(--lateral);border-right:1px solid var(--borde);display:flex;flex-direction:column;padding:22px 16px;gap:14px;overflow:auto}
+.logo{display:flex;align-items:center;gap:12px;padding:0 6px 8px;font-weight:800;font-size:25px;line-height:1.05;letter-spacing:-.02em}
+.menu{display:flex;flex-direction:column;gap:4px;flex:1}
+.menu a{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:12px;color:var(--texto);text-decoration:none;font-weight:500;transition:background .15s}
+.menu a svg{width:22px;height:22px}
+.menu a:hover{background:var(--panel2)}
+.menu a.activo{background:var(--tinta);color:var(--sobre-tinta)}
+.lateral-pie{border-top:1px solid var(--borde);padding-top:14px;display:flex;flex-direction:column;gap:14px}
+.usuario{display:flex;align-items:center;gap:12px;padding:4px 6px;font-weight:500}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--panel2);display:grid;place-items:center}
+.avatar svg{width:18px;height:18px;stroke:none}
+.usuario .flecha{margin-left:auto;width:18px;height:18px}
+.tema{display:flex;align-items:center;justify-content:center;gap:12px;color:var(--suave)}
+.tema svg{width:20px;height:20px}
+.interruptor{width:46px;height:26px;border-radius:99px;background:var(--panel2);border:1px solid var(--borde2);position:relative}
+.interruptor span{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--tinta);transition:transform .2s}
+[data-tema="oscuro"] .interruptor span{transform:translateX(20px)}
+
+/* ---------- centro ---------- */
+.centro{display:flex;flex-direction:column;padding:22px 24px;gap:16px;min-width:0;overflow:auto}
+.barra{display:flex;align-items:center;gap:20px}
+.buscador{flex:1;display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--borde);border-radius:12px;padding:0 16px;height:50px;box-shadow:var(--sombra)}
+.buscador svg{width:22px;height:22px;color:var(--suave)}
+.buscador input{flex:1;border:0;outline:0;background:none;font:inherit;color:var(--texto);min-width:0}
+.buscador input::placeholder{color:var(--suave)}
+kbd{font-family:inherit;font-size:12px;color:var(--suave);border:1px solid var(--borde);border-radius:6px;padding:2px 7px}
+.fecha{display:flex;align-items:center;gap:10px;white-space:nowrap;font-weight:500}
+.fecha svg{width:22px;height:22px}
+
+.pestanas{display:flex;gap:10px;background:var(--panel);border:1px solid var(--borde);border-radius:14px;padding:10px;flex-wrap:wrap}
+.pestana{padding:9px 20px;border-radius:12px;background:var(--panel2);font-weight:600;transition:background .15s}
+.pestana:hover{background:var(--borde)}
+.pestana.activo{background:var(--tinta);color:var(--sobre-tinta)}
+
+.productos{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:14px}
+.tarjeta{background:var(--panel);border:1px solid var(--borde);border-radius:var(--radio);padding:14px 14px 12px;display:flex;flex-direction:column;gap:8px;text-align:left;box-shadow:var(--sombra);transition:transform .12s,border-color .12s}
+.tarjeta:hover{border-color:var(--borde2);transform:translateY(-2px)}
+.tarjeta:active{transform:scale(.98)}
+.tarjeta .img{height:150px;display:grid;place-items:center}
+.tarjeta .img svg{height:100%;width:auto;stroke:none}
+.tarjeta .nombre{font-weight:500;line-height:1.25;min-height:2.5em}
+.tarjeta .fila{display:flex;align-items:center;justify-content:space-between}
+.tarjeta .precio{font-weight:700}
+.mas{width:36px;height:36px;border-radius:10px;background:var(--panel2);display:grid;place-items:center;font-size:22px;font-weight:600;line-height:1}
+.tarjeta:hover .mas{background:var(--tinta);color:var(--sobre-tinta)}
+.vacio{color:var(--suave);padding:20px 4px}
+
+/* ---------- cuenta ---------- */
+.cuenta{background:var(--panel);border-left:1px solid var(--borde);display:flex;flex-direction:column;min-height:0}
+.cuenta-cab{display:flex;align-items:center;gap:14px;background:var(--tinta);color:var(--sobre-tinta);padding:0 20px;height:66px;flex:none}
+.cuenta-cab>svg{width:26px;height:26px}
+.cuenta-cab h2{font-size:19px;font-weight:600;flex:1}
+.icono{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:inherit}
+.icono:hover{background:rgba(127,127,127,.25)}
+.icono svg{width:22px;height:22px}
+
+.lineas{list-style:none;padding:6px 20px;overflow:auto;flex:1;min-height:90px}
+.linea{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--borde)}
+.linea:last-child{border-bottom:0}
+.linea .mini{width:38px;height:46px;display:grid;place-items:center;flex:none}
+.linea .mini svg{height:100%;width:auto;stroke:none}
+.linea .dato{flex:1;min-width:0}
+.linea .dato b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cant{display:inline-flex;align-items:center;gap:8px;margin-top:4px;color:var(--suave)}
+.cant button{width:24px;height:24px;border-radius:7px;background:var(--panel2);font-weight:700;line-height:1;color:var(--texto)}
+.cant button:hover{background:var(--borde)}
+.linea .imp{font-weight:600;white-space:nowrap}
+.cuenta-vacia{padding:34px 20px;text-align:center;color:var(--suave);flex:1}
+.cuenta-vacia[hidden]{display:none}
+
+.totales{padding:12px 20px 0;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--borde)}
+.totales>div{display:flex;justify-content:space-between;color:var(--texto)}
+.totales .total{background:var(--panel2);border-radius:12px;padding:12px 14px;margin-top:6px;font-size:27px;font-weight:800;letter-spacing:-.01em}
+.pago{padding:16px 20px 20px}
+.pago h3{font-size:16px;margin-bottom:10px}
+.metodos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.metodo{display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 6px;border:1px solid var(--borde);border-radius:12px;font-size:13.5px;background:var(--panel)}
+.metodo svg{width:20px;height:20px}
+.metodo.activo{border:2px solid var(--tinta);font-weight:600}
+.acciones{display:grid;grid-template-columns:1fr 1.25fr;gap:10px;margin-top:14px}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;height:52px;border-radius:12px;font-weight:600;font-size:17px}
+.btn svg{width:22px;height:22px}
+.btn.sec{background:var(--panel2)}
+.btn.sec:hover{background:var(--borde)}
+.btn.prim{background:var(--tinta);color:var(--sobre-tinta)}
+.btn.prim:hover{opacity:.9}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ---------- modal ---------- */
+.velo{position:fixed;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center;padding:16px;z-index:100}
+.velo[hidden]{display:none}
+.modal{background:var(--panel);border-radius:18px;padding:26px;width:min(440px,100%);max-height:92vh;max-height:92dvh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.modal h2{font-size:20px}
+.mtotal{font-size:38px;font-weight:800;margin:10px 0 2px;letter-spacing:-.02em}
+.mmetodo{color:var(--suave);margin-bottom:16px}
+.modal label{display:block;font-weight:600;margin:8px 0 6px}
+.modal input{width:100%;height:50px;border:1px solid var(--borde2);border-radius:12px;padding:0 14px;font:inherit;font-size:19px;background:var(--panel);color:var(--texto)}
+.rapidos{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.rapidos button{padding:8px 14px;border-radius:10px;background:var(--panel2);font-weight:600}
+.rapidos button:hover{background:var(--borde)}
+.cambio{margin-top:14px;font-size:18px}
+.listo-ico svg{width:54px;height:54px;margin-bottom:8px}
+[hidden]{display:none!important}
+
+.aviso{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--tinta);color:var(--sobre-tinta);padding:12px 20px;border-radius:12px;font-weight:500;opacity:0;pointer-events:none;transition:.25s;z-index:120}
+.aviso.ver{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- recibo térmico ---------- */
+#recibo{display:none}
+
+@media print{
+  @page{size:80mm auto;margin:0}
+  body{background:#fff}
+  .app,.velo,.aviso,.topmovil,.fondo-menu,.fondo-panel,.barra-carrito{display:none!important}
+  #recibo{display:block;width:72mm;margin:0 auto;padding:4mm 0;color:#000;font:12px/1.35 "Courier New",monospace}
+  #recibo h1{font-size:17px;text-align:center}
+  #recibo .c{text-align:center}
+  #recibo hr{border:0;border-top:1px dashed #000;margin:6px 0}
+  #recibo .f{display:flex;justify-content:space-between;gap:8px}
+  #recibo .t{font-size:15px;font-weight:700}
+}
+
+/* modo oscuro: placa clara detrás de los dibujos para que las botellas oscuras se vean */
+[data-tema="oscuro"] .tarjeta .img,
+[data-tema="oscuro"] .linea .mini{background:#e9e9eb;border-radius:12px}
+[data-tema="oscuro"] .tarjeta .img{padding:8px 0}
+[data-tema="oscuro"] .linea .mini{padding:3px 0}
+
+/* =====================================================================
+   Módulos adicionales (páginas con lista, formularios, gráficos)
+   ===================================================================== */
+a.logo{text-decoration:none;color:inherit}
+.app.dos{grid-template-columns:250px minmax(0,1fr)}
+.pagina{padding:24px 28px;overflow:auto;display:flex;flex-direction:column;gap:18px;min-width:0}
+.pag-cab{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pag-cab h1{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.pag-cab .esp{flex:1}
+.pag-cab p{color:var(--suave);width:100%;margin-top:-6px}
+.btn.peq{height:42px;font-size:15px;padding:0 18px;display:inline-flex;width:auto}
+.btn.peq svg{width:18px;height:18px}
+.btn.fino{height:34px;font-size:14px;padding:0 12px;border-radius:9px;display:inline-flex;width:auto}
+.btn.peligro{background:var(--panel);border:1.5px solid var(--tinta)}
+.btn.peligro:hover{background:var(--tinta);color:var(--sobre-tinta)}
+
+.insignia{margin-left:auto;min-width:22px;height:22px;border-radius:99px;background:var(--tinta);color:var(--sobre-tinta);font-size:12px;font-weight:700;display:grid;place-items:center;padding:0 6px}
+.menu a.activo .insignia{background:var(--sobre-tinta);color:var(--tinta)}
+.usuario{position:relative;cursor:pointer;border-radius:10px}
+.usuario:hover{background:var(--panel2)}
+.popover{position:absolute;bottom:calc(100% + 8px);left:0;right:0;background:var(--panel);border:1px solid var(--borde2);border-radius:12px;padding:8px;box-shadow:0 10px 30px rgba(0,0,0,.2);display:flex;flex-direction:column;gap:4px;z-index:10}
+.popover small{color:var(--suave);padding:4px 8px;font-size:12px}
+.popover button{text-align:left;padding:9px 10px;border-radius:8px;font-size:14px}
+.popover button:hover{background:var(--panel2)}
+
+.filtros{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.filtros .buscador{flex:1;min-width:220px;height:44px}
+.campo-sel,.modal select,.modal textarea,.campo-in{height:44px;border:1px solid var(--borde2);border-radius:10px;padding:0 12px;font:inherit;background:var(--panel);color:var(--texto)}
+.modal select,.modal textarea{width:100%;font-size:16px}
+.modal textarea{height:auto;padding:10px 12px;min-height:70px;resize:vertical}
+.campo-sel{cursor:pointer}
+
+.tabla-caja{background:var(--panel);border:1px solid var(--borde);border-radius:14px;overflow:auto;box-shadow:var(--sombra)}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--suave);font-weight:600;padding:12px 16px;border-bottom:1px solid var(--borde);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid var(--borde);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr.clic{cursor:pointer}
+tbody tr.clic:hover{background:var(--panel2)}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+th.num{text-align:right}
+td .mini2{width:34px;height:42px;display:inline-grid;place-items:center;vertical-align:middle;margin-right:12px}
+td .mini2 svg{height:100%;width:auto;stroke:none}
+[data-tema="oscuro"] td .mini2{background:#e9e9eb;border-radius:8px;padding:2px 0}
+.nom{font-weight:600}
+.sub{color:var(--suave);font-size:13px}
+.vacio-tabla{padding:34px;text-align:center;color:var(--suave)}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font-size:12.5px;font-weight:600;border:1.5px solid var(--borde2);white-space:nowrap}
+.b-bajo{background:var(--panel2);border-color:var(--texto)}
+.b-agotado{background:var(--tinta);color:var(--sobre-tinta);border-color:var(--tinta)}
+.b-anulada{text-decoration:line-through;color:var(--suave)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.stat{background:var(--panel);border:1px solid var(--borde);border-radius:14px;padding:16px 18px;box-shadow:var(--sombra)}
+.stat small{display:block;color:var(--suave);font-size:13px;margin-bottom:6px}
+.stat b{font-size:26px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat span{display:block;color:var(--suave);font-size:12.5px;margin-top:4px}
+.stat.oscura{background:var(--panel2);color:var(--texto);border-color:var(--borde2)}
+.stat.oscura small,.stat.oscura span{color:var(--suave)}
+
+.tarj{background:var(--panel);border:1px solid var(--borde);border-radius:14px;padding:18px 20px;box-shadow:var(--sombra)}
+.tarj h3{font-size:16px;margin-bottom:4px}
+.tarj .nota{color:var(--suave);font-size:13px;margin-bottom:14px}
+.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.nota-pie{color:var(--suave);font-size:13px}
+
+/* gráficos */
+.barras{display:flex;align-items:flex-end;gap:6px;height:230px;padding-top:6px}
+.barras .b{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.barras .b i{display:block;width:100%;max-width:46px;background:var(--tinta);border-radius:6px 6px 0 0;min-height:2px;opacity:.9}
+.barras .b:hover i{opacity:1}
+.barras .b .v{font-size:11px;font-weight:600;margin-bottom:4px;white-space:nowrap}
+.barras .b em{font-style:normal;font-size:11px;color:var(--suave);margin-top:6px;white-space:nowrap}
+.barras.denso .b .v{display:none}
+.barras .b.pico i{background:var(--tinta)}
+.barras .b:not(.pico) i{background:var(--borde2)}
+.barras.mono .b:not(.pico) i{background:var(--tinta)}
+.hbar{display:grid;grid-template-columns:150px 1fr 56px;gap:10px;align-items:center;padding:6px 0;font-size:14px}
+.hbar .pista{height:14px;background:var(--panel2);border-radius:99px;overflow:hidden}
+.hbar .pista i{display:block;height:100%;background:var(--tinta);border-radius:99px}
+.hbar .n{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.hbar .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* formularios en ventanas */
+.modal.chico{width:min(380px,100%)}
+.modal.ancho{width:min(560px,100%)}
+.modal.grande{width:min(860px,100%);max-height:92vh;overflow:auto}
+.cuerpo{margin-top:6px}
+.campos2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.check{display:flex;align-items:center;gap:10px;margin:12px 0 4px;font-weight:500}
+.check input{width:20px;height:20px;accent-color:#18181b}
+.modal .acciones{margin-top:18px}
+.alerta{margin-top:10px;padding:10px 12px;border:1.5px dashed var(--texto);border-radius:10px;font-size:14px}
+.ayuda{color:var(--suave);font-size:13px;margin-top:4px}
+.mmetodo.fuerte{color:var(--texto)}
+
+.bloqueo{margin:auto;text-align:center;max-width:380px;display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 20px}
+.bloqueo svg{width:54px;height:54px}
+.bloqueo .btn{width:auto;padding:0 24px;margin-top:8px}
+.bloqueo p{color:var(--suave)}
+
+/* mesas */
+.mesas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:14px}
+.mesa{background:var(--panel);border:1.5px solid var(--borde);border-radius:var(--radio);padding:16px;min-height:132px;display:flex;flex-direction:column;justify-content:space-between;text-align:left;box-shadow:var(--sombra);transition:transform .12s}
+.mesa:hover{transform:translateY(-2px);border-color:var(--borde2)}
+.mesa h3{font-size:18px}
+.mesa .est{color:var(--suave);font-size:13px}
+.mesa .tot{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.mesa.sel{outline:3px solid var(--texto);outline-offset:2px}
+.leyenda{display:flex;gap:18px;color:var(--suave);font-size:14px;align-items:center}
+.leyenda i{display:inline-block;width:12px;height:12px;border-radius:4px;border:1.5px solid var(--texto);margin-right:6px;vertical-align:-1px}
+.cuenta-ph{padding:40px 24px;text-align:center;color:var(--suave);display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;flex:1}
+.cuenta-ph .btn{width:auto;padding:0 26px}
+.cuenta-acc{padding:0 20px 8px;display:flex;gap:8px}
+.cuenta-acc .btn{flex:1;height:42px;font-size:14.5px}
+
+.picker-cab{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 12px}
+.picker-cab .buscador{flex:1;min-width:180px;height:44px}
+.picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;max-height:50vh;overflow:auto;padding:2px}
+.picker .tarjeta{padding:10px}
+.picker .tarjeta .img{height:84px}
+.picker .tarjeta .nombre{font-size:13.5px;min-height:2.4em}
+.picker .tarjeta .precio{font-size:14px}
+.picker .tarjeta.agotado{opacity:.45}
+.picker .tarjeta .cuantos{position:absolute;top:8px;right:8px;background:var(--tinta);color:var(--sobre-tinta);border-radius:99px;min-width:24px;height:24px;font-size:12.5px;font-weight:700;display:grid;place-items:center;padding:0 6px}
+.picker .tarjeta{position:relative}
+.tarjeta.agotado .mas{visibility:hidden}
+.tarjeta .tag{font-size:12px;color:var(--suave)}
+
+
+/* campos dentro de tarjetas y buscador dentro de ventanas */
+.tarj label{display:block;font-weight:600;margin:8px 0 6px}
+.tarj input:not([type=checkbox]){width:100%;height:50px;border:1px solid var(--borde2);border-radius:12px;padding:0 14px;font:inherit;font-size:19px;background:var(--panel);color:var(--texto)}
+.modal .buscador input{width:auto;height:auto;border:0;padding:0;font-size:16px;background:none;border-radius:0}
+.modal .buscador{margin:0}
+.tarj .campos2{gap:0 14px}
+.modal label.buscador{display:flex;margin:0;font-weight:400}
+
+/* =====================================================================
+   RESPONSIVO · computadora, tablet y celular
+   - ≥1181 px  : menú completo + 3 columnas
+   - 901–1180  : menú de solo íconos (tablet horizontal)
+   - ≤900 px   : barra superior + menú deslizable; la cuenta se abre como panel
+   - ≤640 px   : celular: tablas como tarjetas, ventanas desde abajo
+   ===================================================================== */
+.topmovil,.fondo-menu,.fondo-panel,.barra-carrito,.cerrar-panel{display:none}
+body.sin-scroll{overflow:hidden}
+
+/* --- tablet horizontal: menú de íconos --- */
+@media (min-width:901px) and (max-width:1180px){
+  .app{grid-template-columns:76px minmax(0,1fr) 340px}
+  .app.dos{grid-template-columns:76px minmax(0,1fr)}
+  .lateral{padding:18px 10px;align-items:center}
+  .logo{padding:0}.logo span{display:none}
+  .menu a{font-size:0;justify-content:center;padding:12px;position:relative}
+  .insignia{position:absolute;top:2px;right:2px;margin:0;min-width:18px;height:18px;font-size:11px}
+  .usuario span:not(.avatar),.usuario .flecha{display:none}
+  .tema svg{display:none}
+  .popover{left:60px;right:auto;width:210px;font-size:14px}
+  .productos{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .tarjeta .img{height:120px}
+  .centro,.pagina{padding:18px}
+  .fecha{display:none}
+}
+
+/* --- tablet vertical y celular --- */
+@media (max-width:900px){
+  html,body{height:auto}
+  .app,.app.dos{display:block;height:auto;min-height:100vh;min-height:100dvh}
+
+  .topmovil{display:flex;position:sticky;top:0;z-index:30;align-items:center;gap:10px;height:56px;padding:0 10px 0 6px;background:var(--lateral);border-bottom:1px solid var(--borde)}
+  .topmovil .icono{width:44px;height:44px}
+  .tm-titulo{font-weight:700;font-size:18px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tm-marca{font-weight:800;font-size:15px;letter-spacing:-.01em;color:var(--suave)}
+
+  /* menú deslizable */
+  .lateral{position:fixed;top:0;bottom:0;left:0;width:min(300px,86vw);z-index:50;transform:translateX(-102%);transition:transform .25s ease;box-shadow:none;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+  .lateral.abierto{transform:none;box-shadow:0 0 40px rgba(0,0,0,.35)}
+  .fondo-menu,.fondo-panel{display:block;position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .25s}
+  .fondo-menu{z-index:45}.fondo-panel{z-index:55}
+  .fondo-menu.ver,.fondo-panel.ver{opacity:1;pointer-events:auto}
+  .menu a{padding:14px}
+
+  .centro,.pagina{padding:14px;overflow:visible;min-height:calc(100vh - 56px)}
+  .barra{flex-direction:column;align-items:stretch;gap:10px}
+  .fecha{display:none}
+  .buscador kbd{display:none}
+  .buscador{height:48px}
+  .pestanas{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .pestanas::-webkit-scrollbar{display:none}
+  .pestana{flex:none;padding:10px 18px}
+  .productos{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));padding-bottom:84px}
+  .tarjeta .img{height:116px}
+  .mesas-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+
+  /* la cuenta pasa a ser un panel que entra por la derecha */
+  .cuenta{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);z-index:60;transform:translateX(102%);transition:transform .25s ease;border-left:1px solid var(--borde2);overflow:auto}
+  .cuenta.abierta{transform:none;box-shadow:0 0 40px rgba(0,0,0,.35)}
+  .cuenta .lineas{overflow:visible;flex:none}
+  .cuenta .pago{padding-bottom:calc(20px + env(safe-area-inset-bottom))}
+  .cerrar-panel{display:grid}
+  .cuenta-cab{position:sticky;top:0;z-index:2}
+
+  /* barra flotante "Ver cuenta" */
+  .barra-carrito{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:25;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--tinta);color:var(--sobre-tinta);border-radius:16px;padding:0 20px;height:58px;font-weight:700;font-size:16px;box-shadow:0 8px 28px rgba(0,0,0,.3)}
+  .barra-carrito[hidden]{display:none}
+  .barra-carrito span:last-child{opacity:.8;font-weight:600}
+
+  .cols2{grid-template-columns:1fr}
+  .pag-cab h1{display:none}
+  .pag-cab .esp{display:none}
+  .pag-cab .btn.peq{flex:1 1 auto}
+  input,select,textarea,.campo-sel,.campo-in{font-size:16px}
+  .buscador input{font-size:16px}
+  .filtros .campo-sel,.filtros .campo-in{flex:1;min-width:150px}
+}
+
+/* --- celular --- */
+@media (max-width:640px){
+  .centro,.pagina{padding:12px}
+  .productos{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .tarjeta{padding:10px}
+  .tarjeta .img{height:100px}
+  .tarjeta .nombre{font-size:14px}
+  .mesas-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .mesa{min-height:118px;padding:12px}
+  .mesa .tot{font-size:19px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .stat{padding:12px 14px}
+  .stat b{font-size:20px}
+  .filtros .buscador{min-width:100%}
+  .filtros{gap:8px}
+  .pag-cab .btn.peq{flex:1 1 auto}
+  .hbar{grid-template-columns:96px 1fr 44px;gap:8px;font-size:13.5px}
+  .tarj{padding:14px}
+  .tarj .hbar[style]{grid-template-columns:84px 1fr 86px!important}
+  .totales .total{font-size:23px}
+
+  /* gráficos */
+  .barras{gap:3px;height:200px}
+  .barras .b .v{display:none}
+  .barras .b em{font-size:10px}
+  .barras .b.alt em{visibility:hidden}
+
+  /* ventanas como hoja desde abajo */
+  .velo{place-items:end center;padding:0}
+  .modal,.modal.ancho,.modal.grande,.modal.chico{width:100%;max-width:none;border-radius:22px 22px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));max-height:94vh;max-height:94dvh}
+  .modal h2{font-size:19px}
+  .mtotal{font-size:32px}
+  .campos2{grid-template-columns:1fr}
+  .picker{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));max-height:46vh}
+  .picker .tarjeta .img{height:70px}
+  .picker-cab{flex-direction:column}
+  .aviso{bottom:86px;max-width:92vw;text-align:center}
+
+  /* tablas -> tarjetas */
+  .pagina .tabla-caja{background:none;border:0;box-shadow:none;overflow:visible;border-radius:0}
+  .pagina .tarj .tabla-caja{margin-top:8px}
+  .pagina table,.pagina thead,.pagina tbody,.pagina tr,.pagina td{display:block}
+  .pagina thead{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+  .pagina tbody tr{background:var(--panel);border:1px solid var(--borde);border-radius:14px;margin-bottom:10px;padding:4px 14px;box-shadow:var(--sombra)}
+  .pagina .tarj tbody tr{box-shadow:none}
+  .pagina td{display:flex;justify-content:space-between;align-items:center;gap:14px;border:0;padding:8px 0;text-align:right}
+  .pagina td::before{content:attr(data-label);color:var(--suave);font-size:12px;text-transform:uppercase;letter-spacing:.04em;text-align:left;flex:none}
+  .pagina td:first-child{justify-content:flex-start;text-align:left;font-size:16px;padding:10px 0;border-bottom:1px solid var(--borde);margin-bottom:2px}
+  .pagina td:first-child::before,.pagina td[data-label=""]::before{display:none}
+  .pagina td[data-label=""]{justify-content:flex-end;padding-top:10px}
+  .pagina td .sub{display:block}
+  .pagina td.vacio-tabla{display:block;text-align:center}
+  .pagina td.vacio-tabla::before{display:none}
+  .pagina td.num{text-align:right}
+}
+
+/* --- pantallas táctiles: botones fáciles de tocar --- */
+@media (pointer:coarse){
+  .btn.fino{height:42px;padding:0 16px}
+  .cant button{width:34px;height:34px;font-size:18px}
+  .cant{gap:12px}
+  .mas{width:40px;height:40px}
+  .metodo{padding:14px 6px}
+  .rapidos button{padding:11px 16px}
+  .icono{width:44px;height:44px}
+  .menu a{padding:14px}
+  .tarjeta:hover{transform:none}
+  .mesa:hover{transform:none}
+}
+
+@media (min-width:901px) and (max-width:1180px){
+  .metodos{min-width:0}
+  .metodo{min-width:0;font-size:13px;padding:11px 4px}
+  .metodo svg{display:none}
+}
+
+.mesa .cab{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mesa .est{display:block;margin-top:4px}
+.mesa .badge{font-size:12px;padding:2px 9px}
+
+/* productos más compactos en tablet vertical y celular */
+@media (max-width:900px){
+  .productos{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
+  .tarjeta{padding:9px;gap:5px}
+  .tarjeta .img{height:88px}
+  .tarjeta .nombre{font-size:13.5px;min-height:2.3em}
+  .tarjeta .precio{font-size:14px}
+  .tarjeta .mas{width:34px;height:34px;font-size:20px}
+}
+@media (max-width:640px){
+  .productos{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .tarjeta{padding:8px}
+  .tarjeta .img{height:72px}
+  .tarjeta .nombre{font-size:13px}
+  .tarjeta .precio{font-size:13.5px}
+  .tarjeta .mas{width:32px;height:32px}
+}

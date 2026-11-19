@@ -1,0 +1,11 @@
+from django.urls import path
+
+from . import views
+
+app_name = 'productos'
+
+urlpatterns = [
+    path('', views.inicio, name='inicio'),
+    path('nuevo/', views.nuevo, name='nuevo'),
+    path('<int:pk>/editar/', views.editar, name='editar'),
+]

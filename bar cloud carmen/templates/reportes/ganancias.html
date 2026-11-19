@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load productos %}
+
+{% block contenido %}
+<main class="pagina">
+  {% include 'reportes/_cabecera.html' %}
+
+  <form class="filtros" method="get" action="{% url 'reportes:ganancias' %}" id="filtros">
+    <label for="mes" style="font-weight:600">Mes</label>
+    <input type="month" id="mes" name="mes" class="campo-in" value="{{ mes }}">
+    <span class="esp" style="flex:1"></span>
+    {% if PUEDE.reportes.editar %}<a class="btn prim peq" href="{% url 'reportes:gasto_nuevo' %}?mes={{ mes }}">+ Registrar gasto</a>{% endif %}
+  </form>
+
+  <div class="stats">
+    <div class="stat"><small>Ventas netas</small><b>{{ g.neto|dinero }}</b><span>{{ g.n }} venta{{ g.n|pluralize }}</span></div>
+    <div class="stat"><small>Costo de lo vendido</small><b>{{ g.costo|dinero }}</b></div>
+    <div class="stat"><small>Ganancia bruta</small><b>{{ g.bruta|dinero }}</b></div>
+    <div class="stat"><small>Gastos del mes</small><b>{{ g.gastos_total|dinero }}</b></div>
+    <div class="stat oscura"><small>Ganancia neta</small><b>{% if g.neta < 0 %}−{% endif %}{{ g.neta|dinero|cut:'-' }}</b><span>{% if g.porc_neta is not None %}{{ g.porc_neta }}% de las ventas{% endif %}</span></div>
+  </div>
+
+  {% if g.propina or g.itbis %}
+  <p class="nota-pie">La propina legal ({{ g.propina|dinero }}) y el ITBIS ({{ g.itbis|dinero }}) se cobran al cliente pero no son ingreso del negocio, por eso no se cuentan aquí.</p>
+  {% endif %}
+
+  <div class="cols2">
+    <div class="tarj">
+      <h3>Gastos por categoría</h3>
+      <p class="nota">En qué se va el dinero</p>
+      {% for c in g.por_categoria %}<div class="hbar" style="grid-template-columns:120px 1fr 90px"><span class="t">{{ c.categoria }}</span><span class="pista"><i style="width:{{ c.porc }}%"></i></span><span class="n">{{ c.s|dinero }}</span></div>{% empty %}<p class="nota">Sin gastos este mes.</p>{% endfor %}
+    </div>
+    <div class="tarj">
+      <h3>Resumen</h3>
+      <p class="nota">Cómo se llega a la ganancia neta · {{ mes_texto }}</p>
+      <div class="totales" style="padding:0;border:0">
+        <div><span>Ventas netas</span><span>{{ g.neto|dinero }}</span></div>
+        <div><span>− Costo de productos</span><span>{{ g.costo|dinero }}</span></div>
+        <div><span>= Ganancia bruta</span><span>{{ g.bruta|dinero }}</span></div>
+        <div><span>− Gastos</span><span>{{ g.gastos_total|dinero }}</span></div>
+        <div class="total"><span>Ganancia neta</span><span>{% if g.neta < 0 %}−{% endif %}{{ g.neta|dinero|cut:'-' }}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabla-caja">
+    <table>
+      <thead><tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th>Registró</th><th class="num">Monto</th></tr></thead>
+      <tbody>
+        {% for x in g.gastos %}
+        <tr{% if PUEDE.reportes.editar %} class="clic" data-href="{% url 'reportes:gasto_editar' x.pk %}?mes={{ mes }}"{% endif %}>
+          <td>{{ x.fecha|date:"d/m/Y" }}</td>
+          <td class="nom">{{ x.concepto }}</td>
+          <td>{{ x.categoria }}</td>
+          <td>{{ x.usuario.get_full_name|default:x.usuario.get_username }}</td>
+          <td class="num">{{ x.monto|dinero }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="vacio-tabla">No hay gastos registrados este mes.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="nota-pie">El costo de lo vendido sale del costo que tenía cada producto al momento de la venta.</p>
+</main>
+
+{% if modo %}
+<div class="velo" id="veloGasto">
+  {% if modo == 'eliminar' %}
+  <form class="modal" role="dialog" aria-modal="true" aria-labelledby="tituloGasto" method="post" action="{% url 'reportes:gasto_eliminar' gasto.pk %}">
+    {% csrf_token %}
+    <h2 id="tituloGasto">Eliminar gasto</h2>
+    <div class="cuerpo"><p class="mmetodo">Se elimina <b>{{ gasto.concepto }}</b> ({{ gasto.monto|dinero }}, {{ gasto.fecha|date:"d/m/Y" }}). No se puede deshacer.</p></div>
+    <div class="acciones fila2">
+      <a class="btn sec" href="{% url 'reportes:gasto_editar' gasto.pk %}?mes={{ mes }}" data-cerrar>Volver</a>
+      <button class="btn prim" type="submit">Eliminar</button>
+    </div>
+  </form>
+  {% else %}
+  <form class="modal ancho" role="dialog" aria-modal="true" aria-labelledby="tituloGasto" method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="mes" value="{{ mes }}">
+    <h2 id="tituloGasto">{% if modo == 'nuevo' %}Registrar gasto{% else %}Editar gasto{% endif %}</h2>
+    <div class="cuerpo">
+      {% include 'productos/_campo.html' with f=form.concepto %}
+      <div class="campos2">
+        <div>{% include 'productos/_campo.html' with f=form.monto %}</div>
+        <div>{% include 'productos/_campo.html' with f=form.fecha %}</div>
+      </div>
+      {% include 'productos/_campo.html' with f=form.categoria %}
+      {% if modo == 'editar' %}<p style="margin-top:14px"><a class="btn peligro fino" href="{% url 'reportes:gasto_eliminar' gasto.pk %}?mes={{ mes }}">Eliminar gasto</a></p>{% endif %}
+    </div>
+    <div class="acciones fila2">
+      <a class="btn sec" href="{% url 'reportes:ganancias' %}?mes={{ mes }}" data-cerrar>Cancelar</a>
+      <button class="btn prim" type="submit">Guardar</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var mes = document.getElementById('mes');
+  mes.addEventListener('change', function () { if (mes.value) mes.form.submit(); });
+  document.querySelectorAll('tr[data-href]').forEach(function (tr) {
+    tr.addEventListener('click', function () { location.href = tr.dataset.href; });
+  });
+  var velo = document.getElementById('veloGasto');
+  if (!velo) return;
+  document.body.classList.add('sin-scroll');
+  var cerrar = velo.querySelector('[data-cerrar]');
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') location.href = cerrar.href; });
+  velo.addEventListener('mousedown', function (e) { if (e.target === velo) location.href = cerrar.href; });
+})();
+</script>
+{% endblock %}

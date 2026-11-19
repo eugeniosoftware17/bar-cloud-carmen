@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block contenido %}
+<main class="pagina">
+  <div class="pag-cab">
+    <h1>{{ titulo }}</h1><span class="esp"></span>
+    {% if boton %}<button class="btn prim peq" disabled>{{ boton }}</button>{% endif %}
+    <p>{{ descripcion }}</p>
+  </div>
+  <div class="filtros">
+    <label class="buscador">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input data-buscador type="search" placeholder="Buscar…" autocomplete="off">
+    </label>
+  </div>
+  <div class="tabla-caja">
+    <table>
+      <thead><tr>{% for c in columnas %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+      <tbody><tr><td colspan="{{ columnas|length }}" class="vacio-tabla">{{ vacio }}</td></tr></tbody>
+    </table>
+  </div>
+</main>
+{% endblock %}

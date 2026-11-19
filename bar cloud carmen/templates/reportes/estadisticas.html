@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load productos %}
+
+{% block contenido %}
+<main class="pagina">
+  {% include 'reportes/_cabecera.html' %}
+
+  <form class="filtros" method="get" action="{% url 'reportes:inicio' %}" id="filtros">
+    <select class="campo-sel" name="rango" aria-label="Período">
+      {% for v, t in rangos %}<option value="{{ v }}"{% if rango == v %} selected{% endif %}>{{ t }}</option>{% endfor %}
+    </select>
+    <input type="hidden" name="gran" value="{{ gran }}">
+    <span class="nota-pie">Aplica a las tarjetas, productos, horas y métodos de pago.</span>
+  </form>
+
+  <div class="stats">
+    <div class="stat oscura"><small>Ventas netas</small><b>{{ e.neto|dinero }}</b><span>sin propina ni ITBIS</span></div>
+    <div class="stat"><small>Cantidad de ventas</small><b>{{ e.n }}</b></div>
+    <div class="stat"><small>Ticket promedio</small><b>{{ e.promedio|dinero }}</b></div>
+    <div class="stat"><small>Ganancia bruta</small><b>{{ e.bruta|dinero }}</b><span>ventas menos costo de productos</span></div>
+  </div>
+
+  <div class="tarj">
+    <form class="filtros" method="get" action="{% url 'reportes:inicio' %}" style="justify-content:space-between" id="filtrosGran">
+      <div>
+        <h3>Ventas en el tiempo</h3>
+        <p class="nota" style="margin:0">Ventas netas por {% if gran == 'dia' %}día (14 días){% elif gran == 'semana' %}semana (8 semanas){% else %}mes (6 meses){% endif %}</p>
+      </div>
+      <input type="hidden" name="rango" value="{{ rango }}">
+      <select class="campo-sel" name="gran" aria-label="Agrupar">
+        {% for v, t in granos %}<option value="{{ v }}"{% if gran == v %} selected{% endif %}>{{ t }}</option>{% endfor %}
+      </select>
+    </form>
+    {% include 'reportes/_barras.html' with items=e.serie clase='mono' %}
+  </div>
+
+  <div class="cols2">
+    <div class="tarj">
+      <h3>Productos que más se venden</h3>
+      <p class="nota">Unidades vendidas</p>
+      {% if e.hay_vendidos %}
+        {% for x in e.mas %}<div class="hbar"><span class="t">{{ x.n }}</span><span class="pista"><i style="width:{{ x.porc }}%"></i></span><span class="n">{{ x.q }}</span></div>{% endfor %}
+      {% else %}<p class="nota">Sin ventas en este período.</p>{% endif %}
+    </div>
+    <div class="tarj">
+      <h3>Productos que menos se venden</h3>
+      <p class="nota">Piénsalo antes de volver a comprarlos</p>
+      {% for x in e.menos %}<div class="hbar"><span class="t">{{ x.n }}</span><span class="pista"><i style="width:{{ x.porc }}%"></i></span><span class="n">{{ x.q }}</span></div>{% empty %}<p class="nota">Todavía no hay productos.</p>{% endfor %}
+    </div>
+  </div>
+
+  <div class="cols2">
+    <div class="tarj">
+      <h3>Horas de más movimiento</h3>
+      <p class="nota">{% if e.pico %}La hora más fuerte: {{ e.pico.l|cut:'h' }}:00 ({{ e.pico.v }} venta{{ e.pico.v|pluralize }}).{% else %}Cantidad de ventas por hora.{% endif %}</p>
+      {% include 'reportes/_barras.html' with items=e.horas clase='' %}
+    </div>
+    <div class="tarj">
+      <h3>Por método de pago</h3>
+      <p class="nota">Total cobrado en el período</p>
+      {% for m in e.metodos %}<div class="hbar" style="grid-template-columns:110px 1fr 100px"><span class="t">{{ m.m }}</span><span class="pista"><i style="width:{{ m.porc }}%"></i></span><span class="n">{{ m.total|dinero }}</span></div>{% endfor %}
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('#filtros select, #filtrosGran select').forEach(function (s) {
+  s.addEventListener('change', function () { s.form.submit(); });
+});
+</script>
+{% endblock %}

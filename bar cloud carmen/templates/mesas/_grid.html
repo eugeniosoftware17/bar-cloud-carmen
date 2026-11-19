@@ -1,0 +1,15 @@
+{% load productos mesas %}{% for m in mesas %}
+<button type="button" class="mesa{% if m.pk == sel %} sel{% endif %}" data-id="{{ m.pk }}" aria-pressed="{% if m.pk == sel %}true{% else %}false{% endif %}">
+  <div>
+    <div class="cab"><h3>{{ m.nombre }}</h3>{% if m.ocupada %}<span class="badge b-agotado">Ocupada</span>{% else %}<span class="badge">Libre</span>{% endif %}</div>
+    {% if m.ocupada %}<span class="est">Abierta hace {{ m.abierta_en|hace }}</span>{% endif %}
+  </div>
+  {% if m.ocupada %}
+  <div><div class="tot">{{ m.total|dinero }}</div><span class="est">{{ m.n_productos }} producto{{ m.n_productos|pluralize }}</span></div>
+  {% else %}
+  <div class="est">Toca para abrir cuenta</div>
+  {% endif %}
+</button>
+{% empty %}
+<p class="vacio">No hay mesas. {% if PUEDE.mesas.editar %}Toca <b>+ Agregar mesa</b>.{% endif %}</p>
+{% endfor %}

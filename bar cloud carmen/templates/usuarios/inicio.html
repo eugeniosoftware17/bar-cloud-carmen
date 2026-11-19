@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block contenido %}
+<main class="pagina">
+  <div class="pag-cab">
+    <h1>Usuarios</h1><span class="esp"></span>
+    {% if PUEDE.usuarios.editar %}<a class="btn prim peq" href="{% url 'usuarios:nuevo' %}">+ Nuevo usuario</a>{% endif %}
+    <p>Las personas que pueden entrar al sistema. A cada una le eliges qué módulos usa y si solo puede ver o también editar.</p>
+  </div>
+
+  <div class="tabla-caja">
+    <table>
+      <thead><tr><th>Usuario</th><th>Nombre</th><th>Permisos</th><th>Estado</th><th>Último acceso</th><th></th></tr></thead>
+      <tbody>
+        {% for u in usuarios %}
+        <tr{% if PUEDE.usuarios.editar and not u.is_superuser or PUEDE.usuarios.editar and ES_DUENO %} class="clic" data-href="{% url 'usuarios:editar' u.pk %}"{% endif %}>
+          <td><span class="nom">{{ u.username }}</span>{% if u.pk == user.pk %} <span class="sub">(tú)</span>{% endif %}</td>
+          <td>{{ u.first_name|default:"—" }}</td>
+          <td class="permisos-resumen">{% if u.is_superuser %}<span class="badge b-agotado">Dueño · todo</span>{% else %}<span class="sub">{{ u.resumen }}</span>{% endif %}</td>
+          <td>{% if u.is_active %}Activo{% else %}<span class="badge b-anulada">Desactivado</span>{% endif %}</td>
+          <td>{% if u.last_login %}{{ u.last_login|date:"d/m/Y H:i" }}{% else %}<span class="sub">Nunca</span>{% endif %}</td>
+          <td class="num">{% if PUEDE.usuarios.editar %}{% if not u.is_superuser or ES_DUENO %}<a class="btn sec fino" href="{% url 'usuarios:clave' u.pk %}">Cambiar contraseña</a>{% endif %}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="nota-pie">Los usuarios no se borran: se desactivan para conservar quién hizo cada venta.</p>
+</main>
+
+{% if form %}
+<div class="velo" id="veloUsuario">
+  <form class="modal grande" role="dialog" aria-modal="true" aria-labelledby="tituloUsuario" method="post" novalidate>
+    {% csrf_token %}
+    <h2 id="tituloUsuario">{% if modo == 'nuevo' %}Nuevo usuario{% elif modo == 'clave' %}Cambiar contraseña de {{ usuario.username }}{% else %}Editar usuario {{ usuario.username }}{% endif %}</h2>
+    <div class="cuerpo">
+      {% if form.non_field_errors %}<div class="alerta">{{ form.non_field_errors|join:' ' }}</div>{% endif %}
+      {% if modo == 'clave' %}
+        {% include 'productos/_campo.html' with f=form.new_password1 %}
+        {% include 'productos/_campo.html' with f=form.new_password2 %}
+        <p class="ayuda">Mínimo 8 caracteres; que no sea solo números ni muy fácil de adivinar.</p>
+      {% else %}
+        <div class="campos2">
+          <div>{% include 'productos/_campo.html' with f=form.username %}</div>
+          <div>{% include 'productos/_campo.html' with f=form.first_name %}</div>
+        </div>
+        {% if form.password1 %}
+        <div class="campos2">
+          <div>{% include 'productos/_campo.html' with f=form.password1 %}</div>
+          <div>{% include 'productos/_campo.html' with f=form.password2 %}</div>
+        </div>
+        <p class="ayuda">Mínimo 8 caracteres; que no sea solo números ni muy fácil de adivinar.</p>
+        {% endif %}
+        <label class="check">{{ form.is_active }} {{ form.is_active.label }}</label>
+
+        <div class="permisos-cab">
+          <h3>Permisos por módulo</h3>
+          {% if form.es_dueno %}
+          <p class="ayuda">Es el dueño del sistema: siempre tiene acceso a todo.</p>
+          {% elif form.es_el_mismo %}
+          <p class="ayuda">No puedes cambiar tus propios permisos. Pídeselo al dueño del sistema.</p>
+          {% else %}
+          <div class="permisos-atajos">
+            <span class="sub">Atajos:</span>
+            <button type="button" class="btn sec fino" data-plantilla="caja">Caja</button>
+            <button type="button" class="btn sec fino" data-plantilla="todo">Todo</button>
+            <button type="button" class="btn sec fino" data-plantilla="nada">Quitar todo</button>
+          </div>
+          {% endif %}
+        </div>
+        <div class="tabla-caja permisos" style="box-shadow:none">
+          <table>
+            <thead><tr><th>Módulo</th><th class="c">Sin acceso</th><th class="c">Solo ver</th><th class="c">Ver y editar</th></tr></thead>
+            <tbody>
+              {% for campo, clave in form.campos_permiso %}
+              <tr>
+                <td><b>{{ campo.label }}</b><br><span class="sub">Editar: {{ campo.help_text }}</span></td>
+                {% for opcion in campo %}
+                <td class="c"><label class="permiso-op" title="{{ opcion.choice_label }}">{{ opcion.tag }}<span class="sr">{{ campo.label }}: {{ opcion.choice_label }}</span></label></td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </div>
+    <div class="acciones fila2">
+      <a class="btn sec" href="{% url 'usuarios:inicio' %}" id="cancelarUsuario">Cancelar</a>
+      <button class="btn prim" type="submit">Guardar</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  document.querySelectorAll('tr[data-href]').forEach(function (tr) {
+    tr.addEventListener('click', function (e) { if (!e.target.closest('a')) location.href = tr.dataset.href; });
+  });
+  var velo = document.getElementById('veloUsuario');
+  if (!velo) return;
+  document.body.classList.add('sin-scroll');
+  var cancelar = document.getElementById('cancelarUsuario');
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') location.href = cancelar.href; });
+  velo.addEventListener('mousedown', function (e) { if (e.target === velo) location.href = cancelar.href; });
+  var err = velo.querySelector('.campo-error');
+  var foco = err ? err.parentNode.querySelector('input,select') : velo.querySelector('input:not([type=hidden]):not([type=radio]):not([disabled])');
+  if (foco) foco.focus();
+
+  // atajos de permisos
+  var PLANTILLAS = {
+    caja: { venta_directa: 'editar', mesas: 'editar', productos: 'ver' },
+    todo: 'editar',
+    nada: ''
+  };
+  velo.querySelectorAll('[data-plantilla]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var p = PLANTILLAS[b.dataset.plantilla];
+      velo.querySelectorAll('input[type=radio][name^="perm_"]').forEach(function (r) {
+        var modulo = r.name.slice(5);
+        var nivel = typeof p === 'object' ? (p[modulo] || '') : p;
+        r.checked = r.value === nivel;
+      });
+    });
+  });
+})();
+</script>
+{% endblock %}

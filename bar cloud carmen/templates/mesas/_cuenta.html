@@ -1,0 +1,50 @@
+{% load productos mesas %}{% if not cuenta %}
+<div class="cuenta-ph">
+  <svg viewBox="0 0 24 24" width="46" height="46"><path d="M3 9h18M5 9v10M19 9v10M8 9V5h8v4M5 14h14"/></svg>
+  <p>Selecciona una mesa para ver o abrir su cuenta.</p>
+</div>
+{% elif not cuenta.mesa.ocupada %}
+<header class="cuenta-cab">
+  <h2>{{ cuenta.mesa.nombre }}</h2>
+  <button type="button" class="icono cerrar-panel" data-accion="cerrar-panel" aria-label="Cerrar cuenta"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</header>
+<div class="cuenta-ph">
+  <p><b>{{ cuenta.mesa.nombre }}</b> está libre.</p>
+  {% if PUEDE.mesas.editar %}<button type="button" class="btn prim" data-accion="abrir">Abrir cuenta</button>{% else %}<p class="sub">Tu usuario solo puede ver las mesas.</p>{% endif %}
+</div>
+{% else %}
+<header class="cuenta-cab">
+  <h2>{{ cuenta.mesa.nombre }} · <small style="font-weight:400;opacity:.7">hace {{ cuenta.mesa.abierta_en|hace }}</small></h2>
+  {% if PUEDE.mesas.editar %}<button type="button" class="icono" data-accion="liberar" data-con-consumos="{{ cuenta.lineas|length }}" title="Liberar mesa" aria-label="Liberar mesa"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>{% endif %}
+  <button type="button" class="icono cerrar-panel" data-accion="cerrar-panel" aria-label="Cerrar cuenta"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</header>
+<ul class="lineas">
+  {% for c in cuenta.lineas %}
+  <li class="linea">
+    <div class="mini">{% imagen_producto c.producto %}</div>
+    <div class="dato"><b>{{ c.producto.nombre }}</b><div class="cant">{% if PUEDE.mesas.editar %}<button type="button" data-menos="{{ c.producto_id }}" aria-label="Quitar uno">−</button>{% endif %}<span>x{{ c.cantidad }}</span>{% if PUEDE.mesas.editar %}<button type="button" data-mas="{{ c.producto_id }}" aria-label="Agregar uno">+</button>{% endif %}</div></div>
+    <span class="imp">{{ c.importe|dinero }}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% if not cuenta.lineas %}<p class="cuenta-vacia">Aún no hay consumos.</p>{% endif %}
+{% if PUEDE.mesas.editar %}<div class="cuenta-acc"><button type="button" class="btn sec" data-accion="agregar">+ Agregar consumo</button></div>{% endif %}
+<div class="totales">
+  <div><span>Subtotal</span><span>{{ cuenta.t.subtotal|dinero }}</span></div>
+  {% if CONF.cobrar_propina %}<div><span>Propina legal ({{ CONF.propina_porcentaje|floatformat:"-2" }}%)</span><span>{{ cuenta.t.propina|dinero }}</span></div>{% endif %}
+  {% if CONF.cobrar_itbis %}<div><span>ITBIS ({{ CONF.itbis_porcentaje|floatformat:"-2" }}%)</span><span>{{ cuenta.t.itbis|dinero }}</span></div>{% endif %}
+  <div class="total"><span>Total</span><span>{{ cuenta.t.total|dinero }}</span></div>
+</div>
+<div class="pago">
+  <h3>Método de pago</h3>
+  <div class="metodos" data-metodos>
+    <button type="button" class="metodo activo" data-metodo="Efectivo"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>Efectivo</button>
+    <button type="button" class="metodo" data-metodo="Tarjeta"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Tarjeta</button>
+    <button type="button" class="metodo" data-metodo="Transferencia"><svg viewBox="0 0 24 24"><path d="M4 8h15l-3-3M20 16H5l3 3"/></svg>Transferencia</button>
+  </div>
+  <div class="acciones">
+    <button type="button" class="btn sec" data-accion="precuenta"{% if not cuenta.lineas %} disabled{% endif %}><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 17H4v-6h16v6h-2M7 14h10v7H7z"/></svg>Pre-cuenta</button>
+    <button type="button" class="btn prim" data-accion="cobrar" data-total="{{ cuenta.t.total|floatformat:'0u' }}"{% if not cuenta.lineas or not PUEDE.mesas.editar %} disabled{% endif %}{% if not PUEDE.mesas.editar %} title="Tu usuario solo puede ver las mesas"{% endif %}><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>Cobrar</button>
+  </div>
+</div>
+{% endif %}

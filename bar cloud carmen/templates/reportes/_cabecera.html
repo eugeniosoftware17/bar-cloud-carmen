@@ -1,0 +1,5 @@
+<div class="pag-cab"><h1>Reportes</h1><span class="esp"></span></div>
+<nav class="pestanas pestanas-enlace" aria-label="Secciones de reportes">
+  <a class="pestana{% if seccion == 'estadisticas' %} activo{% endif %}" href="{% url 'reportes:inicio' %}">Estadísticas</a>
+  <a class="pestana{% if seccion == 'ganancias' %} activo{% endif %}" href="{% url 'reportes:ganancias' %}">Gastos y ganancias</a>
+</nav>

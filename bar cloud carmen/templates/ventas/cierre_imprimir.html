@@ -1,0 +1,49 @@
+{% load productos %}<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cierre {{ r.dia|date:"d/m/Y" }}</title>
+<style>
+  @page { size: 80mm auto; margin: 0; }
+  * { box-sizing: border-box; margin: 0; }
+  html { background: #e9e9eb; }
+  body { width: 72mm; margin: 16px auto; padding: 5mm 4mm; background: #fff; color: #000; font: 12px/1.35 "Courier New", monospace; }
+  h1 { font-size: 16px; text-align: center; }
+  .c { text-align: center; }
+  hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
+  .f { display: flex; justify-content: space-between; gap: 8px; }
+  .f span:last-child { white-space: nowrap; }
+  .t { font-size: 14px; font-weight: 700; }
+  @media print { html, body { background: #fff; } body { margin: 0 auto; padding: 4mm 0; } }
+</style>
+</head>
+<body>
+  <h1>{{ CONF.nombre|upper }}</h1>
+  <p class="c"><b>CIERRE DEL DÍA</b></p>
+  <p class="c">{{ r.dia|date:"d/m/Y" }}</p>
+  <hr>
+  <div class="f"><span>Ventas</span><span>{{ r.num_ventas }}</span></div>
+  <div class="f"><span>Total cobrado</span><span>{{ r.total|dinero }}</span></div>
+  <div class="f"><span>Ventas netas</span><span>{{ r.neto|dinero }}</span></div>
+  {% if r.propina %}<div class="f"><span>Propina legal</span><span>{{ r.propina|dinero }}</span></div>{% endif %}
+  {% if r.itbis %}<div class="f"><span>ITBIS</span><span>{{ r.itbis|dinero }}</span></div>{% endif %}
+  <div class="f"><span>Anuladas ({{ r.anuladas_n }})</span><span>{{ r.anuladas_total|dinero }}</span></div>
+  <hr>
+  {% for m in r.por_metodo %}<div class="f"><span>{{ m.metodo }} ({{ m.n }})</span><span>{{ m.total|dinero }}</span></div>{% endfor %}
+  <hr>
+  <div class="f"><span>Fondo inicial</span><span>{{ fondo|dinero }}</span></div>
+  <div class="f"><span>Efectivo esperado</span><span>{{ esperado|dinero }}</span></div>
+  <div class="f"><span>Efectivo contado</span><span>{% if contado is not None %}{{ contado|dinero }}{% else %}—{% endif %}</span></div>
+  {% if diferencia is not None %}
+  <div class="f t"><span>{% if diferencia == 0 %}CUADRA{% elif diferencia > 0 %}SOBRA{% else %}FALTA{% endif %}</span><span>{{ diferencia|dinero|cut:'-' }}</span></div>
+  {% endif %}
+  {% if guardado %}
+  <hr>
+  <div class="f"><span>Cerró</span><span>{{ guardado.usuario.get_full_name|default:guardado.usuario.get_username }}</span></div>
+  <div class="f"><span>Hora</span><span>{{ guardado.hora|date:"d/m/y H:i" }}</span></div>
+  {% if guardado.nota %}<p>Nota: {{ guardado.nota }}</p>{% endif %}
+  {% endif %}
+  {% if imprimir %}<script>window.addEventListener('load', function () { window.focus(); window.print(); });</script>{% endif %}
+</body>
+</html>

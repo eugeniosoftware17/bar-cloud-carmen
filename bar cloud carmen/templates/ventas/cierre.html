@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load productos %}
+
+{% block titulo %}Cierre del día{% endblock %}
+
+{% block contenido %}
+<main class="pagina">
+  <div class="pag-cab"><h1>Ventas</h1><span class="esp"></span></div>
+  {% include 'ventas/_pestanas.html' with seccion='cierre' %}
+
+  <form class="filtros" method="get" action="{% url 'ventas:cierre' %}" id="formDia">
+    <label for="dia" style="font-weight:600">Día</label>
+    <input type="date" id="dia" name="dia" class="campo-in" value="{{ dia|date:'Y-m-d' }}" max="{{ hoy|date:'Y-m-d' }}">
+    {% if guardado %}<span class="badge">Día cerrado por {{ guardado.usuario.get_full_name|default:guardado.usuario.get_username }} a las {{ guardado.hora|date:"H:i" }}</span>{% endif %}
+    <noscript><button class="btn sec peq">Ver</button></noscript>
+  </form>
+
+  {% if not r.num_ventas and not r.anuladas_n %}
+  <p class="alerta">No hay ventas en esta fecha. Haz una venta en Venta directa o elige otro día.</p>
+  {% endif %}
+  {% if cambio_despues %}
+  <p class="alerta">Hubo ventas o anulaciones después de cerrar este día. Revisa el cuadre y toca <b>Actualizar cierre</b>.</p>
+  {% endif %}
+
+  <div class="stats">
+    <div class="stat oscura"><small>Total vendido (cobrado)</small><b>{{ r.total|dinero }}</b><span>{{ r.num_ventas }} venta{{ r.num_ventas|pluralize }}</span></div>
+    <div class="stat"><small>Ventas netas</small><b>{{ r.neto|dinero }}</b><span>ingreso del negocio</span></div>
+    {% if r.propina or CONF.cobrar_propina %}<div class="stat"><small>Propina legal</small><b>{{ r.propina|dinero }}</b></div>{% endif %}
+    {% if r.itbis or CONF.cobrar_itbis %}<div class="stat"><small>ITBIS</small><b>{{ r.itbis|dinero }}</b></div>{% endif %}
+    <div class="stat"><small>Anuladas</small><b>{{ r.anuladas_n }}</b><span>{{ r.anuladas_total|dinero }}</span></div>
+  </div>
+
+  <div class="cols2">
+    <form class="tarj" method="post" action="{% url 'ventas:cierre' %}" id="formCierre" novalidate data-efectivo="{{ r.efectivo|floatformat:'0u' }}">
+      {% csrf_token %}
+      <input type="hidden" name="dia" value="{{ dia|date:'Y-m-d' }}">
+      <h3>Cuadre de caja</h3>
+      <p class="nota">Compara el efectivo que debería haber con lo que cuentas en la caja.</p>
+      <div class="campos2">
+        <div>
+          <label for="fondo">Fondo inicial en caja (RD$)</label>
+          <input type="number" id="fondo" name="fondo" min="0" step="1" inputmode="numeric" placeholder="0" value="{{ fondo|floatformat:'-2u' }}">
+        </div>
+        <div>
+          <label for="contado">Efectivo contado (RD$)</label>
+          <input type="number" id="contado" name="contado" min="0" step="1" inputmode="numeric" placeholder="0" value="{{ contado|floatformat:'-2u' }}">
+        </div>
+      </div>
+      <div class="totales" style="padding:12px 0 0;border:0">
+        <div><span>Ventas en efectivo</span><span>{{ r.efectivo|dinero }}</span></div>
+        <div><span>Fondo inicial</span><span id="cFondo">RD$ 0</span></div>
+        <div class="total"><span>Efectivo esperado</span><span id="cEsp">{{ r.efectivo|dinero }}</span></div>
+        <div class="total cierre-dif" id="cDifFila"><span id="cDifT">Diferencia</span><span id="cDif">—</span></div>
+      </div>
+      <label for="nota">Nota (opcional)</label>
+      <textarea id="nota" name="nota" maxlength="200" placeholder="Ej.: faltan RD$ 50 que se dieron de cambio de más">{{ nota }}</textarea>
+      {% if error %}<p class="campo-error">{{ error }}</p>{% endif %}
+      <div class="cierre-acciones" style="margin-top:14px">
+        <button type="button" class="btn sec peq" id="btnImprimir" data-url="{% url 'ventas:cierre_imprimir' %}?dia={{ dia|date:'Y-m-d' }}">Imprimir cierre</button>
+        {% if PUEDE.ventas.editar %}<button type="submit" class="btn prim peq">{% if guardado %}Actualizar cierre{% else %}Cerrar el día{% endif %}</button>{% else %}<span class="sub">Tu usuario solo puede ver el cierre.</span>{% endif %}
+      </div>
+    </form>
+
+    <div class="tarj">
+      <h3>Por método de pago</h3>
+      <p class="nota">Lo cobrado en el día.</p>
+      {% for m in r.por_metodo %}
+      <div class="hbar" style="grid-template-columns:130px 1fr 110px"><span class="t">{{ m.metodo }} <span class="sub">({{ m.n }})</span></span><span class="pista"><i style="width:{{ m.porcentaje }}%"></i></span><span class="n">{{ m.total|dinero }}</span></div>
+      {% endfor %}
+      <h3 style="margin-top:18px">Más vendidos del día</h3>
+      {% for p in r.top %}
+      <div class="hbar"><span class="t">{{ p.nombre }}</span><span class="pista"><i style="width:{{ p.porcentaje }}%"></i></span><span class="n">{{ p.cantidad }}</span></div>
+      {% empty %}
+      <p class="nota">Sin ventas.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="tarj">
+    <h3>Cierres anteriores</h3>
+    <div class="tabla-caja" style="box-shadow:none;margin-top:8px">
+      <table>
+        <thead><tr><th>Día</th><th class="num">Total vendido</th><th class="num">Esperado</th><th class="num">Contado</th><th class="num">Diferencia</th><th>Cerró</th></tr></thead>
+        <tbody>
+          {% for c in anteriores %}
+          <tr class="clic" data-href="{% url 'ventas:cierre' %}?dia={{ c.dia|date:'Y-m-d' }}">
+            <td><a class="enlace-fila" href="{% url 'ventas:cierre' %}?dia={{ c.dia|date:'Y-m-d' }}">{{ c.dia|date:"d/m/Y" }}</a></td>
+            <td class="num">{{ c.total_vendido|dinero }}</td>
+            <td class="num">{{ c.esperado|dinero }}</td>
+            <td class="num">{{ c.contado|dinero }}</td>
+            <td class="num"><b>{% if c.diferencia > 0 %}+{% elif c.diferencia < 0 %}−{% endif %}{{ c.diferencia|dinero|cut:'-' }}</b> <span class="sub">{{ c.resultado }}</span></td>
+            <td>{{ c.usuario.get_full_name|default:c.usuario.get_username }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="vacio-tabla">Aún no hay cierres guardados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+  var money = function (n) { return 'RD$ ' + Math.round(Math.abs(n)).toLocaleString('en-US'); };
+  var d = document.getElementById('dia');
+  d.addEventListener('change', function () { if (d.value) document.getElementById('formDia').submit(); });
+
+  var f = document.getElementById('formCierre'), ef = parseFloat(f.dataset.efectivo) || 0;
+  function calc() {
+    var fondo = parseFloat(f.fondo.value) || 0, c = f.contado.value, esp = fondo + ef;
+    document.getElementById('cFondo').textContent = money(fondo);
+    document.getElementById('cEsp').textContent = money(esp);
+    var fila = document.getElementById('cDifFila');
+    fila.classList.remove('falta', 'sobra');
+    if (c === '') { document.getElementById('cDif').textContent = '—'; document.getElementById('cDifT').textContent = 'Diferencia'; return; }
+    var dif = parseFloat(c) - esp;
+    document.getElementById('cDif').textContent = (dif > 0 ? '+' : dif < 0 ? '−' : '') + money(dif);
+    document.getElementById('cDifT').textContent = dif === 0 ? 'Cuadra' : dif > 0 ? 'Sobra' : 'Falta';
+    if (dif) fila.classList.add(dif > 0 ? 'sobra' : 'falta');
+  }
+  f.addEventListener('input', calc);
+  calc();
+
+  document.getElementById('btnImprimir').addEventListener('click', function () {
+    var m = document.getElementById('marcoRecibo'); if (m) m.remove();
+    var p = new URLSearchParams({ fondo: f.fondo.value, contado: f.contado.value, imprimir: '1' });
+    m = document.createElement('iframe'); m.id = 'marcoRecibo'; m.title = 'Cierre';
+    m.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0';
+    m.src = this.dataset.url + '&' + p.toString(); document.body.appendChild(m);
+  });
+  document.querySelectorAll('tr[data-href]').forEach(function (tr) {
+    tr.addEventListener('click', function (e) { if (!e.target.closest('a')) location.href = tr.dataset.href; });
+  });
+})();
+</script>
+{% endblock %}

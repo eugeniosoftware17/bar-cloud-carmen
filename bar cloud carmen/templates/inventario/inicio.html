@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load productos %}
+
+{% block contenido %}
+<main class="pagina">
+  <div class="pag-cab">
+    <h1>Inventario</h1><span class="esp"></span>
+    <a class="btn sec peq" href="{% url 'inventario:pedir' %}">Lista para pedir</a>
+    {% if PUEDE.inventario.editar %}<a class="btn prim peq" href="{% url 'inventario:entrada' %}">+ Registrar entrada</a>{% endif %}
+  </div>
+
+  <div class="stats">
+    <div class="stat"><small>Productos controlados</small><b>{{ resumen.controlados }}</b></div>
+    <div class="stat"><small>Con poco stock</small><b>{{ resumen.bajos }}</b></div>
+    <div class="stat{% if resumen.agotados %} oscura{% endif %}"><small>Agotados</small><b>{{ resumen.agotados }}</b></div>
+    <div class="stat"><small>Valor del inventario</small><b>{{ resumen.valor|dinero }}</b><span>a precio de costo</span></div>
+  </div>
+
+  <nav class="pestanas pestanas-enlace" aria-label="Secciones de inventario">
+    <a class="pestana{% if seccion == 'existencias' %} activo{% endif %}" href="{% url 'inventario:inicio' %}">Existencias</a>
+    <a class="pestana{% if seccion == 'movimientos' %} activo{% endif %}" href="{% url 'inventario:movimientos' %}">Movimientos</a>
+  </nav>
+
+  {% if seccion == 'existencias' %}
+  <form class="filtros" method="get" action="{% url 'inventario:inicio' %}" id="filtros">
+    <label class="buscador">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input name="q" data-buscador type="search" placeholder="Buscar productos…" autocomplete="off" value="{{ filtros.q }}">
+    </label>
+    <select class="campo-sel" name="estado" aria-label="Estado">
+      <option value="">Todos</option>
+      <option value="bajo"{% if filtros.estado == 'bajo' %} selected{% endif %}>Poco stock o agotados</option>
+    </select>
+  </form>
+  <div class="tabla-caja">
+    <table>
+      <thead><tr><th>Producto</th><th class="num">Stock</th><th class="num">Avisar en</th><th>Estado</th><th class="num">Valor</th><th></th></tr></thead>
+      <tbody>
+        {% for p in productos %}
+        <tr>
+          <td><span class="mini2">{% imagen_producto p %}</span><span class="nom">{{ p.nombre }}</span></td>
+          <td class="num"><b>{{ p.stock }}</b></td>
+          <td class="num">{{ p.stock_minimo }}</td>
+          <td>{% estado_producto p %}</td>
+          <td class="num">{{ p.valor|dinero }}</td>
+          <td class="num acciones-fila">{% if PUEDE.inventario.editar %}
+            <a class="btn sec fino" href="{% url 'inventario:entrada' %}?producto={{ p.pk }}">Entrada</a>
+            <a class="btn sec fino" href="{% url 'inventario:ajuste' p.pk %}">Ajustar</a>
+          {% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="vacio-tabla">{% if filtros.q or filtros.estado %}No hay productos con ese filtro.{% else %}No hay productos que controlen inventario. Márcalo al crear el producto.{% endif %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="nota-pie">Los tragos y la comida que se preparan al momento no aparecen aquí porque no controlan inventario.</p>
+  {% else %}
+  <form class="filtros" method="get" action="{% url 'inventario:movimientos' %}" id="filtros">
+    <label class="buscador">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input name="q" data-buscador type="search" placeholder="Buscar producto, proveedor o nota…" autocomplete="off" value="{{ filtros.q }}">
+    </label>
+    <select class="campo-sel" name="tipo" aria-label="Tipo de movimiento">
+      <option value="">Todos los movimientos</option>
+      {% for v, t in tipos %}<option value="{{ v }}"{% if filtros.tipo == v %} selected{% endif %}>{{ t }}</option>{% endfor %}
+    </select>
+  </form>
+  <div class="tabla-caja">
+    <table>
+      <thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th class="num">Cantidad</th><th class="num">Quedó</th><th>Proveedor</th><th>Nota</th><th>Usuario</th></tr></thead>
+      <tbody>
+        {% for m in movimientos %}
+        <tr>
+          <td>{{ m.fecha|date:"d/m/Y H:i" }}</td>
+          <td class="nom">{{ m.producto.nombre }}</td>
+          <td><span class="badge{% if m.tipo == 'entrada' %} b-bajo{% elif m.tipo == 'ajuste' or m.tipo == 'anulacion' %} b-agotado{% endif %}">{{ m.get_tipo_display }}</span></td>
+          <td class="num"><b>{% if m.cantidad > 0 %}+{% endif %}{{ m.cantidad }}</b></td>
+          <td class="num">{{ m.stock_despues }}</td>
+          <td>{{ m.proveedor.nombre|default:"—" }}</td>
+          <td>{% if m.venta and m.tipo != 'ajuste' %}<a class="enlace-fila" href="{% url 'ventas:detalle' m.venta_id %}">{{ m.nota }}</a>{% else %}{{ m.nota|default:"—" }}{% endif %}</td>
+          <td>{{ m.usuario.get_full_name|default:m.usuario.get_username }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="vacio-tabla">Sin movimientos.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if movimientos|length == 200 %}<p class="nota-pie">Se muestran los 200 más recientes.</p>{% endif %}
+  {% endif %}
+</main>
+
+{% if modal %}
+<div class="velo" id="veloInv">
+  {% if modal == 'entrada' %}
+  <form class="modal ancho" role="dialog" aria-modal="true" aria-labelledby="tituloInv" method="post" action="{% url 'inventario:entrada' %}" novalidate>
+    {% csrf_token %}
+    <h2 id="tituloInv">Registrar entrada de mercancía</h2>
+    <div class="cuerpo">
+      {% if opciones %}
+      <label for="eP">Producto</label>
+      <select id="eP" name="producto">
+        {% for p in opciones %}<option value="{{ p.pk }}" data-costo="{{ p.costo|floatformat:'-2u' }}"{% if datos.producto == p.pk|stringformat:'s' %} selected{% endif %}>{{ p.nombre }} (stock {{ p.stock }})</option>{% endfor %}
+      </select>
+      <div class="campos2">
+        <div><label for="eC">Cantidad que llegó</label><input id="eC" name="cantidad" type="number" min="1" step="1" inputmode="numeric" value="{{ datos.cantidad|default:'' }}"></div>
+        <div><label for="eCo">Costo por unidad (RD$)</label><input id="eCo" name="costo" type="number" min="0" step="1" inputmode="numeric" value="{{ datos.costo|floatformat:'-2u' }}"></div>
+      </div>
+      <label for="eV">Proveedor</label>
+      <select id="eV" name="proveedor">
+        <option value="">Sin proveedor</option>
+        {% for v in proveedores %}<option value="{{ v.pk }}"{% if datos.proveedor == v.pk|stringformat:'s' %} selected{% endif %}>{{ v.nombre }}</option>{% endfor %}
+      </select>
+      {% if not proveedores and PUEDE.proveedores.editar %}<p class="ayuda">Puedes registrar proveedores en <a href="{% url 'proveedores:inicio' %}">Proveedores</a>.</p>{% endif %}
+      <label for="eN">Nota (opcional)</label>
+      <input id="eN" name="nota" maxlength="200" placeholder="Ej.: pedido del martes" value="{{ datos.nota|default:'' }}">
+      <p class="ayuda">Si el costo cambió, se actualiza el costo del producto.</p>
+      {% else %}
+      <p class="mmetodo">No hay productos que controlen inventario.</p>
+      {% endif %}
+      {% if error %}<p class="campo-error">{{ error }}</p>{% endif %}
+    </div>
+    <div class="acciones fila2">
+      <a class="btn sec" href="{% url 'inventario:inicio' %}" data-cerrar>Cancelar</a>
+      <button class="btn prim" type="submit"{% if not opciones %} disabled{% endif %}>Registrar entrada</button>
+    </div>
+  </form>
+
+  {% elif modal == 'ajuste' %}
+  <form class="modal ancho" role="dialog" aria-modal="true" aria-labelledby="tituloInv" method="post" action="{% url 'inventario:ajuste' producto.pk %}" novalidate>
+    {% csrf_token %}
+    <h2 id="tituloInv">Ajustar existencia · {{ producto.nombre }}</h2>
+    <div class="cuerpo">
+      <p class="mmetodo fuerte">Stock en el sistema: <b>{{ producto.stock }}</b></p>
+      <label for="aN">Cantidad real que hay (conteo)</label>
+      <input id="aN" name="conteo" type="number" min="0" step="1" inputmode="numeric" value="{{ datos.conteo }}" data-stock="{{ producto.stock }}">
+      <p class="ayuda" id="aDif"></p>
+      <label for="aM">Motivo</label>
+      <select id="aM" name="motivo">{% for m in motivos %}<option{% if datos.motivo == m %} selected{% endif %}>{{ m }}</option>{% endfor %}</select>
+      <label for="aO">Nota (opcional)</label>
+      <input id="aO" name="nota" maxlength="150" value="{{ datos.nota|default:'' }}">
+      {% if error %}<p class="campo-error">{{ error }}</p>{% endif %}
+    </div>
+    <div class="acciones fila2">
+      <a class="btn sec" href="{% url 'inventario:inicio' %}" data-cerrar>Cancelar</a>
+      <button class="btn prim" type="submit">Guardar ajuste</button>
+    </div>
+  </form>
+
+  {% elif modal == 'pedir' %}
+  <div class="modal ancho" role="dialog" aria-modal="true" aria-labelledby="tituloInv">
+    <h2 id="tituloInv">Lista para pedir</h2>
+    <div class="cuerpo">
+      {% if pedidos %}
+      <div class="tabla-caja" style="box-shadow:none"><table>
+        <thead><tr><th>Producto</th><th class="num">Stock</th><th class="num">Pedir (sugerido)</th></tr></thead>
+        <tbody>{% for x in pedidos %}<tr><td>{{ x.producto.nombre }}</td><td class="num">{{ x.producto.stock }}</td><td class="num"><b>{{ x.pedir }}</b></td></tr>{% endfor %}</tbody>
+      </table></div>
+      <p class="ayuda">Sugerencia: reponer hasta el doble del mínimo.</p>
+      {% else %}
+      <p class="mmetodo">Todo está por encima del mínimo. No hay nada que pedir.</p>
+      {% endif %}
+    </div>
+    <div class="acciones fila2">
+      <a class="btn sec" href="{% url 'inventario:inicio' %}" data-cerrar>Cerrar</a>
+      {% if pedidos %}<button type="button" class="btn prim" id="btnImprimir" data-url="{% url 'inventario:pedir_imprimir' %}?imprimir=1">Imprimir lista</button>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+  var f = document.getElementById('filtros'), t;
+  f.querySelectorAll('select').forEach(function (s) { s.addEventListener('change', function () { f.submit(); }); });
+  var q = f.querySelector('[name=q]');
+  q.addEventListener('input', function () { clearTimeout(t); t = setTimeout(function () { f.submit(); }, 400); });
+  if (q.value) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+
+  var velo = document.getElementById('veloInv');
+  if (!velo) return;
+  document.body.classList.add('sin-scroll');
+  var cerrar = velo.querySelector('[data-cerrar]');
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') location.href = cerrar.href; });
+  velo.addEventListener('mousedown', function (e) { if (e.target === velo) location.href = cerrar.href; });
+
+  var sel = document.getElementById('eP');
+  if (sel) {
+    sel.addEventListener('change', function () { document.getElementById('eCo').value = sel.selectedOptions[0].dataset.costo; });
+    document.getElementById('eC').focus();
+  }
+  var conteo = document.getElementById('aN');
+  if (conteo) {
+    var dif = function () {
+      var d = (parseInt(conteo.value, 10) || 0) - parseInt(conteo.dataset.stock, 10);
+      document.getElementById('aDif').textContent = conteo.value === '' ? '' : d === 0 ? 'Sin diferencia.' : (d > 0 ? 'Se sumarán ' + d : 'Se restarán ' + (-d)) + ' al stock.';
+    };
+    conteo.addEventListener('input', dif); dif(); conteo.focus(); conteo.select();
+  }
+  var bi = document.getElementById('btnImprimir');
+  if (bi) bi.addEventListener('click', function () {
+    var m = document.getElementById('marcoRecibo'); if (m) m.remove();
+    m = document.createElement('iframe'); m.id = 'marcoRecibo'; m.title = 'Lista para pedir';
+    m.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0';
+    m.src = bi.dataset.url; document.body.appendChild(m);
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lista para pedir</title>
+<style>
+  @page { size: 80mm auto; margin: 0; }
+  * { box-sizing: border-box; margin: 0; }
+  html { background: #e9e9eb; }
+  body { width: 72mm; margin: 16px auto; padding: 5mm 4mm; background: #fff; color: #000; font: 12px/1.35 "Courier New", monospace; }
+  h1 { font-size: 16px; text-align: center; }
+  .c { text-align: center; }
+  hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
+  .f { display: flex; justify-content: space-between; gap: 8px; }
+  @media print { html, body { background: #fff; } body { margin: 0 auto; padding: 4mm 0; } }
+</style>
+</head>
+<body>
+  <h1>{{ CONF.nombre|upper }}</h1>
+  <p class="c"><b>LISTA PARA PEDIR</b></p>
+  <p class="c">{% now "d/m/Y H:i" %}</p>
+  <hr>
+  <div class="f"><b>Producto</b><b>Pedir</b></div>
+  {% for x in pedidos %}<div class="f"><span>{{ x.producto.nombre }} (hay {{ x.producto.stock }})</span><span>{{ x.pedir }}</span></div>{% empty %}<p class="c">Nada que pedir.</p>{% endfor %}
+  {% if imprimir %}<script>window.addEventListener('load', function () { window.focus(); window.print(); });</script>{% endif %}
+</body>
+</html>

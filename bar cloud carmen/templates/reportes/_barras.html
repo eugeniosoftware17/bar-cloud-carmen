@@ -1,0 +1,1 @@
+<div class="barras {{ clase }}">{% for i in items %}<div class="b{% if i.pico %} pico{% endif %}{% if items|length > 10 and forloop.counter|divisibleby:2 %} alt{% endif %}" title="{{ i.t }}"><span class="v">{{ i.etq }}</span><i style="height:{{ i.alto }}px"></i><em>{{ i.l }}</em></div>{% endfor %}</div>

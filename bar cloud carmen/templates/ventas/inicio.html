@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load productos %}
+
+{% block contenido %}
+<main class="pagina">
+  <div class="pag-cab"><h1>Ventas</h1><span class="esp"></span></div>
+  {% include 'ventas/_pestanas.html' with seccion='historial' %}
+
+  <div class="stats">
+    <div class="stat oscura"><small>Total cobrado</small><b>{{ resumen.validas.total|dinero }}</b><span>{{ resumen.validas.n }} venta{{ resumen.validas.n|pluralize }} válida{{ resumen.validas.n|pluralize }}</span></div>
+    <div class="stat"><small>Ventas netas</small><b>{{ resumen.validas.neto|dinero }}</b><span>sin propina ni ITBIS</span></div>
+    <div class="stat"><small>Ticket promedio</small><b>{{ resumen.validas.promedio|dinero }}</b><span>sin propina ni ITBIS</span></div>
+    <div class="stat"><small>Anuladas</small><b>{{ resumen.anuladas.n }}</b><span>{{ resumen.anuladas.total|dinero }}</span></div>
+  </div>
+
+  <form class="filtros" method="get" action="{% url 'ventas:inicio' %}" id="filtros">
+    <select class="campo-sel" name="per" aria-label="Período">
+      {% for v, t in periodos %}<option value="{{ v }}"{% if filtros.per == v %} selected{% endif %}>{{ t }}</option>{% endfor %}
+    </select>
+    <select class="campo-sel" name="metodo" aria-label="Método de pago">
+      <option value="">Todos los métodos</option>
+      {% for m in metodos %}<option{% if filtros.metodo == m %} selected{% endif %}>{{ m }}</option>{% endfor %}
+    </select>
+    <select class="campo-sel" name="estado" aria-label="Estado">
+      {% for v, t in estados %}<option value="{{ v }}"{% if filtros.estado == v %} selected{% endif %}>{{ t }}</option>{% endfor %}
+    </select>
+    <label class="buscador">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input name="num" data-buscador type="search" inputmode="numeric" placeholder="Buscar por número de venta…" autocomplete="off" value="{{ filtros.num }}">
+    </label>
+    <noscript><button class="btn sec peq">Filtrar</button></noscript>
+  </form>
+
+  <div class="tabla-caja">
+    <table>
+      <thead><tr><th>Nº</th><th>Fecha</th><th>Origen</th><th>Atendió</th><th>Método</th><th class="num">Total</th><th>Estado</th></tr></thead>
+      <tbody>
+        {% for v in ventas %}
+        <tr class="clic" data-href="{% url 'ventas:detalle' v.pk %}{% if request.GET.urlencode %}?volver=?{{ request.GET.urlencode|urlencode }}{% endif %}">
+          <td><a class="enlace-fila" href="{% url 'ventas:detalle' v.pk %}"><b>#{{ v.numero }}</b></a></td>
+          <td>{{ v.fecha|date:"d/m/Y H:i" }}</td>
+          <td>{{ v.origen }}</td>
+          <td>{{ v.usuario.get_full_name|default:v.usuario.get_username }}</td>
+          <td>{{ v.metodo }}</td>
+          <td class="num"><b>{{ v.total|dinero }}</b></td>
+          <td>{% if v.anulada %}<span class="badge b-anulada">Anulada</span>{% else %}<span class="badge">Pagada</span>{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="vacio-tabla">No hay ventas con ese filtro.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if ventas|length == 200 %}<p class="nota-pie">Se muestran las 200 más recientes. Usa los filtros para ver otras.</p>{% endif %}
+</main>
+
+{% if venta %}
+<div class="velo" id="veloVenta">
+  {% if anular %}
+  <form class="modal" role="dialog" aria-modal="true" aria-labelledby="tituloVenta" method="post" action="{% url 'ventas:anular' venta.pk %}" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="volver" value="{{ volver }}">
+    <h2 id="tituloVenta">Anular venta #{{ venta.numero }}</h2>
+    <div class="cuerpo">
+      <p class="mmetodo">La venta deja de contar en los reportes y los productos vuelven al inventario. No se puede deshacer.</p>
+      <label for="motivo">Motivo</label>
+      <textarea id="motivo" name="motivo" maxlength="200" placeholder="Ej.: se cobró dos veces" autofocus>{{ request.POST.motivo }}</textarea>
+      {% if error %}<p class="campo-error">{{ error }}</p>{% endif %}
+    </div>
+    <div class="acciones fila2">
+      <a class="btn sec" href="{% url 'ventas:detalle' venta.pk %}{% if volver %}?volver={{ volver|urlencode }}{% endif %}" data-cerrar>Volver</a>
+      <button class="btn prim" type="submit">Anular venta</button>
+    </div>
+  </form>
+  {% else %}
+  <div class="modal ancho" role="dialog" aria-modal="true" aria-labelledby="tituloVenta">
+    <h2 id="tituloVenta">Venta #{{ venta.numero }}{% if venta.anulada %} · ANULADA{% endif %}</h2>
+    <div class="cuerpo">
+      <p class="mmetodo">{{ venta.fecha|date:"d/m/Y H:i" }} · {{ venta.origen }} · {{ venta.metodo }}{% if venta.referencia %} (ref. {{ venta.referencia }}){% endif %} · atendió {{ venta.usuario.get_full_name|default:venta.usuario.get_username }}</p>
+      <div class="tabla-caja" style="box-shadow:none">
+        <table><tbody>
+          {% for l in venta.lineas.all %}<tr><td>{{ l.cantidad }} x {{ l.nombre }}</td><td class="num">{{ l.importe|dinero }}</td></tr>{% endfor %}
+          <tr><td class="sub">Subtotal</td><td class="num">{{ venta.subtotal|dinero }}</td></tr>
+          {% if venta.propina %}<tr><td class="sub">Propina legal</td><td class="num">{{ venta.propina|dinero }}</td></tr>{% endif %}
+          {% if venta.itbis %}<tr><td class="sub">ITBIS</td><td class="num">{{ venta.itbis|dinero }}</td></tr>{% endif %}
+          <tr><td><b>Total</b></td><td class="num"><b>{{ venta.total|dinero }}</b></td></tr>
+          {% if venta.metodo == 'Efectivo' %}<tr><td class="sub">Recibido / cambio</td><td class="num">{{ venta.recibido|dinero }} / {{ venta.cambio|dinero }}</td></tr>{% endif %}
+        </tbody></table>
+      </div>
+      {% if venta.anulada %}
+      <p class="alerta">Anulada por {{ venta.anulada_por.get_full_name|default:venta.anulada_por.get_username }} el {{ venta.anulada_en|date:"d/m/Y H:i" }}: {{ venta.motivo_anulacion }}. El inventario fue devuelto.</p>
+      {% endif %}
+      <p style="margin-top:12px"><button type="button" class="btn sec fino" id="btnRecibo" data-url="{% url 'ventas:recibo' venta.pk %}?imprimir=1">Imprimir recibo</button></p>
+    </div>
+    <div class="acciones fila2">
+      <a class="btn sec" href="{% url 'ventas:inicio' %}{{ volver }}" data-cerrar>Cerrar</a>
+      {% if not venta.anulada and PUEDE.ventas.editar %}<a class="btn prim" href="{% url 'ventas:anular' venta.pk %}{% if volver %}?volver={{ volver|urlencode }}{% endif %}">Anular venta</a>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var f = document.getElementById('filtros'), t;
+  f.querySelectorAll('select').forEach(function (s) { s.addEventListener('change', function () { f.submit(); }); });
+  var q = f.querySelector('[name=num]');
+  q.addEventListener('input', function () { clearTimeout(t); t = setTimeout(function () { f.submit(); }, 500); });
+  if (q.value) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+  document.querySelectorAll('tr[data-href]').forEach(function (tr) {
+    tr.addEventListener('click', function (e) { if (!e.target.closest('a')) location.href = tr.dataset.href; });
+  });
+  var velo = document.getElementById('veloVenta');
+  if (velo) {
+    document.body.classList.add('sin-scroll');
+    var cerrar = velo.querySelector('[data-cerrar]');
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') location.href = cerrar.href; });
+    velo.addEventListener('mousedown', function (e) { if (e.target === velo) location.href = cerrar.href; });
+    var br = document.getElementById('btnRecibo');
+    if (br) br.addEventListener('click', function () {
+      var m = document.getElementById('marcoRecibo'); if (m) m.remove();
+      m = document.createElement('iframe'); m.id = 'marcoRecibo'; m.title = 'Recibo';
+      m.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0';
+      m.src = br.dataset.url; document.body.appendChild(m);
+    });
+  }
+})();
+</script>
+{% endblock %}

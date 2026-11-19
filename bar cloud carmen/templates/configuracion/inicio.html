@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block contenido %}
+<main class="pagina">
+  <div class="pag-cab">
+    <h1>Configuración</h1><span class="esp"></span>
+    <p>Datos del negocio, cargos que se cobran y lo que sale en el recibo.</p>
+  </div>
+
+  <form method="post" class="config" novalidate id="formConfig">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="alerta">{{ form.non_field_errors|join:' ' }}</div>{% endif %}
+    <div class="config-cols">
+      <div class="config-campos">
+        <section class="tarj">
+          <h3>Nombre y datos del negocio</h3>
+          <p class="nota">El nombre sale arriba en la factura (recibo) y en la pantalla de entrada.</p>
+          {% include 'productos/_campo.html' with f=form.nombre %}
+          <div class="campos2">
+            <div>{% include 'productos/_campo.html' with f=form.direccion %}</div>
+            <div>{% include 'productos/_campo.html' with f=form.telefono %}</div>
+          </div>
+        </section>
+
+        <section class="tarj">
+          <h3>Cargos de cada venta</h3>
+          <p class="nota">Si desactivas un cargo, deja de cobrarse y no sale en la cuenta ni en el recibo. Las ventas ya hechas no cambian.</p>
+          <div class="config-cargo">
+            <label class="check">{{ form.cobrar_propina }} Cobrar propina legal</label>
+            <div class="config-porc">{{ form.propina_porcentaje }}<span>%</span></div>
+          </div>
+          {% for e in form.propina_porcentaje.errors %}<p class="campo-error">{{ e }}</p>{% endfor %}
+          <div class="config-cargo">
+            <label class="check">{{ form.cobrar_itbis }} Cobrar ITBIS</label>
+            <div class="config-porc">{{ form.itbis_porcentaje }}<span>%</span></div>
+          </div>
+          {% for e in form.itbis_porcentaje.errors %}<p class="campo-error">{{ e }}</p>{% endfor %}
+        </section>
+
+        <section class="tarj">
+          <h3>Recibo</h3>
+          <p class="nota">Elige qué textos salen al pie del recibo impreso.</p>
+          <label class="check">{{ form.recibo_mostrar_atendio }} Mostrar quién atendió</label>
+          {% include 'productos/_campo.html' with f=form.recibo_mensaje %}
+          <label class="check">{{ form.recibo_mostrar_aviso }} Mostrar aviso al pie</label>
+          {% include 'productos/_campo.html' with f=form.recibo_aviso %}
+        </section>
+
+        <div class="filtros">
+          {% if PUEDE.configuracion.editar %}<button type="submit" class="btn prim peq">Guardar cambios</button>
+          <a class="btn sec peq" href="{% url 'configuracion:inicio' %}">Descartar</a>{% else %}<span class="sub">Tu usuario solo puede ver la configuración.</span>{% endif %}
+        </div>
+      </div>
+
+      <aside class="tarj config-vista" aria-label="Vista previa del recibo">
+        <h3>Vista previa del recibo</h3>
+        <p class="nota">Así se verá con una venta de ejemplo de RD$ 300.</p>
+        <div class="ticket" id="ticket" aria-live="polite"></div>
+      </aside>
+    </div>
+  </form>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+  var f = document.getElementById('formConfig');
+  var campo = function (n) { return f.elements[n]; };
+  var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var money = function (n) { return 'RD$ ' + Math.round(n).toLocaleString('en-US'); };
+  var fila = function (a, b, cls) { return '<div class="f' + (cls ? ' ' + cls : '') + '"><span>' + a + '</span><span>' + b + '</span></div>'; };
+
+  function pintar() {
+    // porcentajes solo se editan si el cargo está activo
+    campo('propina_porcentaje').disabled = !campo('cobrar_propina').checked;
+    campo('itbis_porcentaje').disabled = !campo('cobrar_itbis').checked;
+    campo('recibo_aviso').disabled = !campo('recibo_mostrar_aviso').checked;
+
+    var sub = 300;
+    var prop = campo('cobrar_propina').checked ? Math.round(sub * (parseFloat(campo('propina_porcentaje').value) || 0) / 100) : 0;
+    var itb = campo('cobrar_itbis').checked ? Math.round(sub * (parseFloat(campo('itbis_porcentaje').value) || 0) / 100) : 0;
+    var nombre = campo('nombre').value.trim() || 'Nombre del negocio';
+    var h = '<b class="c t">' + esc(nombre.toUpperCase()) + '</b>';
+    if (campo('direccion').value.trim()) h += '<p class="c">' + esc(campo('direccion').value.trim()) + '</p>';
+    if (campo('telefono').value.trim()) h += '<p class="c">Tel. ' + esc(campo('telefono').value.trim()) + '</p>';
+    h += '<hr>' + fila('Directa · Venta #0001', '19/11/26 16:23');
+    if (campo('recibo_mostrar_atendio').checked) h += fila('Atendió', 'admin');
+    h += '<hr>' + fila('2 x Cerveza Presidente', money(sub)) + '<hr>' + fila('Subtotal', money(sub));
+    if (prop) h += fila('Propina legal', money(prop));
+    if (itb) h += fila('ITBIS', money(itb));
+    h += fila('TOTAL', money(sub + prop + itb), 't') + '<hr>' + fila('Pago', 'Efectivo');
+    var msg = campo('recibo_mensaje').value.trim();
+    var aviso = campo('recibo_mostrar_aviso').checked ? campo('recibo_aviso').value.trim() : '';
+    if (msg || aviso) h += '<hr>';
+    if (msg) h += '<p class="c">' + esc(msg) + '</p>';
+    if (aviso) h += '<p class="c">' + esc(aviso) + '</p>';
+    document.getElementById('ticket').innerHTML = h;
+  }
+  f.addEventListener('input', pintar);
+  f.addEventListener('change', pintar);
+  // los campos desactivados no se envían: se reactivan al guardar para no perder el valor
+  f.addEventListener('submit', function () { f.querySelectorAll('input:disabled').forEach(function (i) { i.disabled = false; }); });
+  pintar();
+})();
+</script>
+{% endblock %}
