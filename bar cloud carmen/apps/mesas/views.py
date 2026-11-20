@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.template.loader import render_to_string
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
 
 from apps.productos.models import Categoria, Producto
@@ -142,6 +143,7 @@ def nueva(request):
     return JsonResponse({'ok': True, 'nombre': mesa.nombre, **_fragmentos(request, mesa.pk)})
 
 
+@xframe_options_sameorigin  # se imprime desde un marco escondido en la misma página
 @requiere('mesas')
 def precuenta(request, pk):
     mesa = get_object_or_404(Mesa, pk=pk)

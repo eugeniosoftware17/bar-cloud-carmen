@@ -91,6 +91,19 @@ class VentasTests(TestCase):
         self.assertContains(r, 'RD$ 384')
         self.assertContains(r, 'RD$ 116')  # cambio
 
+    def test_paginas_de_impresion_se_abren_en_marco(self):
+        # se imprimen desde un <iframe> de la misma página: con DENY el navegador las bloquea
+        from apps.mesas.models import Mesa
+        v, _ = registrar_venta(usuario=self.cajero, lineas=[{'id': self.cerveza.pk, 'cantidad': 1}], metodo='Tarjeta')
+        self.client.force_login(self.admin)
+        for url in [reverse('ventas:recibo', args=[v.pk]), reverse('ventas:cierre_imprimir'),
+                    reverse('mesas:precuenta', args=[Mesa.objects.first().pk]), reverse('inventario:pedir_imprimir')]:
+            r = self.client.get(url)
+            self.assertEqual(r.status_code, 200, url)
+            self.assertEqual(r['X-Frame-Options'], 'SAMEORIGIN', url)
+        # el resto del sistema sigue sin poder meterse en un marco
+        self.assertEqual(self.client.get(reverse('ventas:inicio'))['X-Frame-Options'], 'DENY')
+
     def test_recibo_dos_copias(self):
         from apps.configuracion.models import Configuracion
         v, _ = registrar_venta(usuario=self.cajero, lineas=[{'id': self.cerveza.pk, 'cantidad': 2}], metodo='Efectivo', recibido=500)

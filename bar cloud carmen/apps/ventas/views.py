@@ -8,6 +8,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
 
 from apps.configuracion.models import Configuracion
@@ -58,6 +59,7 @@ def respuesta_venta(venta, alertas):
     }
 
 
+@xframe_options_sameorigin  # se imprime desde un marco escondido en la misma página
 @requiere_alguno('venta_directa', 'mesas', 'ventas')
 def recibo(request, pk):
     venta = get_object_or_404(Venta.objects.select_related('usuario').prefetch_related('lineas'), pk=pk)
@@ -196,6 +198,7 @@ def cierre(request):
     }, status=400 if error else 200)
 
 
+@xframe_options_sameorigin  # se imprime desde un marco escondido en la misma página
 @requiere('ventas')
 def cierre_imprimir(request):
     """Hoja del cierre para la impresora de 80 mm. Usa lo escrito en pantalla (aunque no se haya guardado)."""

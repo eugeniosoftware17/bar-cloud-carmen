@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.db.models import DecimalField, ExpressionWrapper, F, Q, Sum
 from django.db.models.functions import Greatest
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from apps.productos.models import Producto
 from apps.proveedores.models import Proveedor
@@ -100,6 +101,7 @@ def pedir(request):
     return _pagina(request, modal='pedir', pedidos=lista_para_pedir())
 
 
+@xframe_options_sameorigin  # se imprime desde un marco escondido en la misma página
 @requiere('inventario')
 def pedir_imprimir(request):
     return render(request, 'inventario/pedir_imprimir.html', {
