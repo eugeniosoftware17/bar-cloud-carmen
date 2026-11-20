@@ -18,6 +18,11 @@
   {% if PUEDE.mesas.editar %}<button type="button" class="icono" data-accion="liberar" data-con-consumos="{{ cuenta.lineas|length }}" title="Liberar mesa" aria-label="Liberar mesa"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>{% endif %}
   <button type="button" class="icono cerrar-panel" data-accion="cerrar-panel" aria-label="Cerrar cuenta"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
 </header>
+<div class="atiende-fila">
+  <span class="sub">Atiende</span>
+  <b>{% if cuenta.mesa.mesera %}{{ cuenta.mesa.mesera.nombre }}{% else %}Sin asignar{% endif %}</b>
+  {% if PUEDE.mesas.editar %}<button type="button" class="btn sec peq" data-accion="mesera">Cambiar</button>{% endif %}
+</div>
 <ul class="lineas">
   {% for c in cuenta.lineas %}
   <li class="linea">

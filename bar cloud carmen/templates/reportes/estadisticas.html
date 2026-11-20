@@ -61,6 +61,13 @@
       {% for m in e.metodos %}<div class="hbar" style="grid-template-columns:110px 1fr 100px"><span class="t">{{ m.m }}</span><span class="pista"><i style="width:{{ m.porc }}%"></i></span><span class="n">{{ m.total|dinero }}</span></div>{% endfor %}
     </div>
   </div>
+
+  <div class="tarj">
+    <h3>Por mesera</h3>
+    <p class="nota">Cuentas de mesa que atendió cada una, lo vendido (sin propina ni ITBIS) y la propina legal que generó.</p>
+    {% for m in e.meseras %}<div class="hbar" style="grid-template-columns:minmax(90px,160px) 1fr auto"><span class="t">{{ m.mesera }}</span><span class="pista"><i style="width:{{ m.porc }}%"></i></span><span class="n">{{ m.neto|dinero }} · {{ m.cuentas }} cuenta{{ m.cuentas|pluralize }}{% if m.propina %} · propina {{ m.propina|dinero }}{% endif %}</span></div>
+    {% empty %}<p class="sub">Todavía no hay ventas de mesa con mesera en este período.</p>{% endfor %}
+  </div>
 </main>
 {% endblock %}
 

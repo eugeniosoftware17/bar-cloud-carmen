@@ -22,6 +22,8 @@ class Configuracion(models.Model):
     itbis_porcentaje = models.DecimalField('ITBIS (%)', max_digits=5, decimal_places=2, default=18, validators=PORCENTAJE)
 
     # recibo
+    recibo_dos_copias = models.BooleanField('imprimir dos copias', default=True,
+                                            help_text='Una para el cliente y otra para el negocio, en la misma impresión.')
     recibo_mostrar_atendio = models.BooleanField('mostrar quién atendió', default=True)
     recibo_mensaje = models.CharField('mensaje de despedida', max_length=80, blank=True, default='¡Gracias por su visita!')
     recibo_mostrar_aviso = models.BooleanField('mostrar aviso al pie', default=True)

@@ -12,12 +12,12 @@ from apps.ventas.servicios import calcular
 from apps.ventas.views import respuesta_venta
 
 from . import servicios
-from .models import Mesa
+from .models import Mesa, Mesera
 from .servicios import MesaError
 
 
 def _mesas():
-    mesas = list(Mesa.objects.filter(activa=True).prefetch_related('consumos__producto'))
+    mesas = list(Mesa.objects.filter(activa=True).select_related('mesera').prefetch_related('consumos__producto'))
     for m in mesas:
         consumos = list(m.consumos.all())
         m.n_productos = len(consumos)
@@ -34,7 +34,7 @@ def _cuenta(mesa):
 
 
 def _fragmentos(request, mesa_id):
-    mesa = Mesa.objects.filter(pk=mesa_id, activa=True).select_related('abierta_por').first() if mesa_id else None
+    mesa = Mesa.objects.filter(pk=mesa_id, activa=True).select_related('abierta_por', 'mesera').first() if mesa_id else None
     mesas = _mesas()
     ctx = {'mesas': mesas, 'sel': mesa.pk if mesa else None, 'cuenta': _cuenta(mesa)}
     en_cuenta = {c.producto_id: c.cantidad for c in mesa.consumos.all()} if mesa else {}
@@ -44,6 +44,8 @@ def _fragmentos(request, mesa_id):
         'libres': sum(1 for m in mesas if not m.ocupada),
         'ocupadas': sum(1 for m in mesas if m.ocupada),
         'en_cuenta': {str(k): v for k, v in en_cuenta.items()},
+        'meseras': [{'id': m.pk, 'nombre': m.nombre} for m in Mesera.objects.filter(activa=True)],
+        'mesera': mesa.mesera_id if mesa and mesa.ocupada else None,
     }
 
 
@@ -63,6 +65,7 @@ def inicio(request):
     return render(request, 'mesas/inicio.html', {
         'frag': frag,
         'en_cuenta_json': json.dumps(frag['en_cuenta']),
+        'meseras_json': json.dumps(frag['meseras']),
         'sel': sel,
         'categorias': categorias,
         'categoria_inicial': categorias[0].pk if categorias else None,
@@ -87,7 +90,24 @@ def _accion(request, pk, fn):
 @requiere('mesas', 'editar')
 @require_POST
 def abrir(request, pk):
-    return _accion(request, pk, lambda: servicios.abrir(pk, usuario=request.user))
+    d = _datos(request)
+    return _accion(request, pk, lambda: servicios.abrir(pk, usuario=request.user,
+                                                        mesera_id=d.get('mesera'), nombre=d.get('nombre', '')))
+
+
+@requiere('mesas', 'editar')
+@require_POST
+def mesera(request, pk):
+    d = _datos(request)
+    return _accion(request, pk, lambda: servicios.cambiar_mesera(pk, mesera_id=d.get('mesera'), nombre=d.get('nombre', '')))
+
+
+@requiere('mesas', 'editar')
+@require_POST
+def quitar_mesera(request, mesera_id):
+    servicios.quitar_mesera(mesera_id)
+    sel = request.GET.get('mesa')
+    return JsonResponse({'ok': True, **_fragmentos(request, int(sel) if sel and sel.isdigit() else None)})
 
 
 @requiere('mesas', 'editar')

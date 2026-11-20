@@ -51,7 +51,7 @@ def _limpiar_lineas(lineas):
 
 
 @transaction.atomic
-def registrar_venta(*, usuario, lineas, metodo, recibido=None, referencia='', mesa=''):
+def registrar_venta(*, usuario, lineas, metodo, recibido=None, referencia='', mesa='', mesera=''):
     if metodo not in Venta.Metodo.values:
         raise VentaError('Elige un método de pago válido.')
     cantidades = _limpiar_lineas(lineas)
@@ -81,7 +81,7 @@ def registrar_venta(*, usuario, lineas, metodo, recibido=None, referencia='', me
         recibido, cambio = t['total'], Decimal('0')
 
     venta = Venta.objects.create(
-        usuario=usuario, metodo=metodo, mesa=mesa, referencia=(referencia or '').strip()[:60],
+        usuario=usuario, metodo=metodo, mesa=mesa, mesera=(mesera or '')[:40], referencia=(referencia or '').strip()[:60],
         recibido=recibido, cambio=cambio, **t,
     )
     LineaVenta.objects.bulk_create([

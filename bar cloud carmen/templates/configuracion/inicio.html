@@ -39,7 +39,8 @@
 
         <section class="tarj">
           <h3>Recibo</h3>
-          <p class="nota">Elige qué textos salen al pie del recibo impreso.</p>
+          <p class="nota">Elige cuántas copias se imprimen y qué textos salen en el recibo.</p>
+          <label class="check">{{ form.recibo_dos_copias }} Imprimir dos copias: una para el cliente y otra para el negocio</label>
           <label class="check">{{ form.recibo_mostrar_atendio }} Mostrar quién atendió</label>
           {% include 'productos/_campo.html' with f=form.recibo_mensaje %}
           <label class="check">{{ form.recibo_mostrar_aviso }} Mostrar aviso al pie</label>
@@ -85,6 +86,7 @@
     var h = '<b class="c t">' + esc(nombre.toUpperCase()) + '</b>';
     if (campo('direccion').value.trim()) h += '<p class="c">' + esc(campo('direccion').value.trim()) + '</p>';
     if (campo('telefono').value.trim()) h += '<p class="c">Tel. ' + esc(campo('telefono').value.trim()) + '</p>';
+    if (campo('recibo_dos_copias').checked) h += '<p class="c"><b>COPIA CLIENTE</b></p>';
     h += '<hr>' + fila('Directa · Venta #0001', '19/11/26 16:23');
     if (campo('recibo_mostrar_atendio').checked) h += fila('Atendió', 'admin');
     h += '<hr>' + fila('2 x Cerveza Presidente', money(sub)) + '<hr>' + fila('Subtotal', money(sub));
@@ -96,6 +98,7 @@
     if (msg || aviso) h += '<hr>';
     if (msg) h += '<p class="c">' + esc(msg) + '</p>';
     if (aviso) h += '<p class="c">' + esc(aviso) + '</p>';
+    if (campo('recibo_dos_copias').checked) h += '<hr><p class="c">Se imprime también la COPIA NEGOCIO.</p>';
     document.getElementById('ticket').innerHTML = h;
   }
   f.addEventListener('input', pintar);

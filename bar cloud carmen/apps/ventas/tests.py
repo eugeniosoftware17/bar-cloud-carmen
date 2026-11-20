@@ -91,6 +91,25 @@ class VentasTests(TestCase):
         self.assertContains(r, 'RD$ 384')
         self.assertContains(r, 'RD$ 116')  # cambio
 
+    def test_recibo_dos_copias(self):
+        from apps.configuracion.models import Configuracion
+        v, _ = registrar_venta(usuario=self.cajero, lineas=[{'id': self.cerveza.pk, 'cantidad': 2}], metodo='Efectivo', recibido=500)
+        self.client.force_login(self.cajero)
+        url = reverse('ventas:recibo', args=[v.pk])
+        r = self.client.get(url)
+        self.assertContains(r, 'COPIA CLIENTE', count=1)
+        self.assertContains(r, 'COPIA NEGOCIO', count=1)
+        self.assertContains(r, '2 x Cerveza', count=2)
+        # reimprimir solo la del cliente
+        r = self.client.get(url, {'copias': '1'})
+        self.assertNotContains(r, 'COPIA NEGOCIO')
+        self.assertContains(r, '2 x Cerveza', count=1)
+        # si en Configuración se quita, sale una sola sin etiqueta
+        conf = Configuracion.obtener(); conf.recibo_dos_copias = False; conf.save()
+        r = self.client.get(url)
+        self.assertNotContains(r, 'COPIA CLIENTE')
+        self.assertContains(r, '2 x Cerveza', count=1)
+
     # ---------- anular ----------
     def test_anular_devuelve_stock(self):
         v, _ = registrar_venta(usuario=self.cajero, lineas=[{'id': self.ron.pk, 'cantidad': 2}, {'id': self.mojito.pk, 'cantidad': 1}], metodo='Tarjeta')

@@ -40,7 +40,7 @@
           <td><a class="enlace-fila" href="{% url 'ventas:detalle' v.pk %}"><b>#{{ v.numero }}</b></a></td>
           <td>{{ v.fecha|date:"d/m/Y H:i" }}</td>
           <td>{{ v.origen }}</td>
-          <td>{{ v.usuario.get_full_name|default:v.usuario.get_username }}</td>
+          <td>{{ v.atendio }}</td>
           <td>{{ v.metodo }}</td>
           <td class="num"><b>{{ v.total|dinero }}</b></td>
           <td>{% if v.anulada %}<span class="badge b-anulada">Anulada</span>{% else %}<span class="badge">Pagada</span>{% endif %}</td>
@@ -76,7 +76,7 @@
   <div class="modal ancho" role="dialog" aria-modal="true" aria-labelledby="tituloVenta">
     <h2 id="tituloVenta">Venta #{{ venta.numero }}{% if venta.anulada %} · ANULADA{% endif %}</h2>
     <div class="cuerpo">
-      <p class="mmetodo">{{ venta.fecha|date:"d/m/Y H:i" }} · {{ venta.origen }} · {{ venta.metodo }}{% if venta.referencia %} (ref. {{ venta.referencia }}){% endif %} · atendió {{ venta.usuario.get_full_name|default:venta.usuario.get_username }}</p>
+      <p class="mmetodo">{{ venta.fecha|date:"d/m/Y H:i" }} · {{ venta.origen }} · {{ venta.metodo }}{% if venta.referencia %} (ref. {{ venta.referencia }}){% endif %} · atendió {{ venta.atendio }}{% if venta.mesera %} · cobró {{ venta.usuario.get_full_name|default:venta.usuario.get_username }}{% endif %}</p>
       <div class="tabla-caja" style="box-shadow:none">
         <table><tbody>
           {% for l in venta.lineas.all %}<tr><td>{{ l.cantidad }} x {{ l.nombre }}</td><td class="num">{{ l.importe|dinero }}</td></tr>{% endfor %}

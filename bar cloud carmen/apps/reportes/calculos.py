@@ -9,7 +9,7 @@ from collections import defaultdict
 from datetime import date, timedelta
 from decimal import Decimal
 
-from django.db.models import DecimalField, ExpressionWrapper, F, Sum
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, Sum
 from django.utils import timezone
 
 from apps.productos.models import Producto
@@ -120,10 +120,17 @@ def estadisticas(rango='7', gran='dia', hoy=None):
     total = sum(totales.values(), CERO) or Decimal('1')
     metodos = [{'m': m, 'total': totales.get(m, CERO), 'porc': round(totales.get(m, CERO) / total * 100)} for m in Venta.Metodo.values]
 
+    # meseras (solo ventas de mesa con quién atendió)
+    filas = (ventas.exclude(mesera='').values('mesera')
+             .annotate(cuentas=Count('pk'), neto=Sum('subtotal'), propina=Sum('propina')).order_by('-neto'))
+    tope = max([f['neto'] for f in filas] + [Decimal('1')])
+    meseras = [{**f, 'porc': round(f['neto'] / tope * 100)} for f in filas]
+
     return {
         'neto': neto, 'n': n, 'promedio': neto / n if n else CERO, 'bruta': neto - costo,
         'serie': serie_ventas(gran, hoy), 'mas': mas, 'menos': menos, 'hay_vendidos': bool(mas and mas[0]['q']),
         'horas': _barras(items_horas), 'pico': pico, 'metodos': metodos,
+        'meseras': meseras,
     }
 
 

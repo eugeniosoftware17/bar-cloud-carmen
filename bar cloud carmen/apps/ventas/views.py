@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from apps.configuracion.models import Configuracion
 from apps.usuarios.permisos import puede, requiere, requiere_alguno
 
 from .cierre import cerrar_dia, resumen_dia
@@ -60,8 +61,11 @@ def respuesta_venta(venta, alertas):
 @requiere_alguno('venta_directa', 'mesas', 'ventas')
 def recibo(request, pk):
     venta = get_object_or_404(Venta.objects.select_related('usuario').prefetch_related('lineas'), pk=pk)
+    dos = Configuracion.obtener().recibo_dos_copias and request.GET.get('copias') != '1'
     return render(request, 'ventas/recibo.html', {
         'venta': venta,
+        'copias': ['COPIA CLIENTE', 'COPIA NEGOCIO'] if dos else [''],
+        'dos_copias': dos,
         'imprimir': request.GET.get('imprimir') == '1',
     })
 

@@ -79,3 +79,19 @@ a.btn.prim{color:var(--sobre-tinta)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .permisos-resumen{max-width:340px;white-space:normal}
 @media (max-width:640px){.permisos .c{width:auto}.permisos th.c{font-size:10px}}
+
+/* mesas · quién atiende */
+.atiende-fila{display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--borde)}
+.atiende-fila b{flex:1;font-size:16px}
+.mesa .atiende{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lista-meseras{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:14px}
+.lista-meseras .mesera{position:relative;display:flex;align-items:center;justify-content:center;min-height:52px;padding:8px 12px;border:1.5px solid var(--borde);border-radius:12px;background:var(--panel);font:inherit;font-size:16px;font-weight:600;color:var(--texto);cursor:pointer}
+.lista-meseras .mesera:hover{border-color:var(--borde2)}
+.lista-meseras .mesera.activo{border-color:var(--texto);background:var(--texto);color:var(--panel)}
+.lista-meseras .quitar{position:absolute;top:2px;right:4px;width:24px;height:24px;border-radius:50%;font-size:15px;line-height:1;color:inherit;opacity:.55;background:none;border:0;cursor:pointer}
+.lista-meseras .quitar:hover{opacity:1}
+.lista-meseras-vacia{margin-bottom:12px}
+
+/* fotos de productos: que quepan en su cuadro sin tapar el nombre ni el precio */
+.tarjeta .img,.linea .mini,td .mini2{overflow:hidden;min-width:0;grid-template-rows:minmax(0,100%);grid-template-columns:minmax(0,100%)}
+.tarjeta .img img,.linea .mini img,td .mini2 img{display:block;width:100%;height:100%;object-fit:contain}

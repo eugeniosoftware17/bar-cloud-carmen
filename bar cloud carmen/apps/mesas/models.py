@@ -4,6 +4,21 @@ from django.conf import settings
 from django.db import models
 
 
+class Mesera(models.Model):
+    """Persona que atiende las mesas (no necesita usuario del sistema)."""
+
+    nombre = models.CharField('nombre', max_length=40, unique=True)
+    activa = models.BooleanField('activa', default=True, help_text='Las desactivadas no salen al abrir una mesa.')
+
+    class Meta:
+        verbose_name = 'mesera'
+        verbose_name_plural = 'meseras'
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
+
 class Mesa(models.Model):
     nombre = models.CharField('nombre', max_length=30, unique=True)
     orden = models.PositiveSmallIntegerField('orden', default=0)
@@ -12,6 +27,8 @@ class Mesa(models.Model):
     abierta_en = models.DateTimeField('cuenta abierta en', null=True, blank=True)
     abierta_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True,
                                     related_name='mesas_abiertas', verbose_name='abrió la cuenta')
+    mesera = models.ForeignKey(Mesera, on_delete=models.SET_NULL, null=True, blank=True,
+                               related_name='mesas', verbose_name='la atiende')
 
     class Meta:
         verbose_name = 'mesa'

@@ -8,7 +8,10 @@
   @page { size: 80mm auto; margin: 0; }
   * { box-sizing: border-box; margin: 0; }
   html { background: #e9e9eb; }
-  body { width: 72mm; margin: 16px auto; padding: 5mm 4mm; background: #fff; color: #000; font: 12px/1.35 "Courier New", monospace; }
+  body { width: 72mm; margin: 16px auto; color: #000; font: 12px/1.35 "Courier New", monospace; }
+  .ticket { padding: 5mm 4mm; background: #fff; }
+  .ticket + .ticket { margin-top: 12px; break-before: page; page-break-before: always; }
+  .copia { text-align: center; font-weight: 700; border: 1px solid #000; padding: 2px; margin-top: 6px; letter-spacing: .05em; }
   h1 { font-size: 17px; text-align: center; }
   .c { text-align: center; }
   hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
@@ -17,21 +20,27 @@
   .t { font-size: 15px; font-weight: 700; }
   .anulada { border: 2px solid #000; padding: 3px; font-weight: 700; text-align: center; margin: 6px 0; }
   .acciones { margin-top: 14px; display: flex; gap: 8px; font-family: system-ui, sans-serif; }
+  .acciones button.sec { background: #fff; color: #18181b; border: 1px solid #18181b; }
   .acciones button { flex: 1; height: 40px; border: 0; border-radius: 10px; background: #18181b; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
   @media print {
     html, body { background: #fff; }
-    body { margin: 0 auto; padding: 4mm 0; }
+    body { margin: 0 auto; }
+    .ticket { padding: 4mm 0; }
+    .ticket + .ticket { margin-top: 0; }
     .acciones { display: none; }
   }
 </style>
 </head>
 <body>
+{% for copia in copias %}
+<section class="ticket">
   <h1>{{ CONF.nombre|upper }}</h1>
   {% if CONF.direccion %}<p class="c">{{ CONF.direccion }}</p>{% endif %}
   {% if CONF.telefono %}<p class="c">Tel. {{ CONF.telefono }}</p>{% endif %}
+  {% if copia %}<p class="copia">{{ copia }}</p>{% endif %}
   <hr>
   <div class="f"><span>{{ venta.origen }} · Venta #{{ venta.numero }}</span><span>{{ venta.fecha|date:"d/m/y H:i" }}</span></div>
-  {% if CONF.recibo_mostrar_atendio %}<div class="f"><span>Atendió</span><span>{{ venta.usuario.get_full_name|default:venta.usuario.get_username }}</span></div>{% endif %}
+  {% if CONF.recibo_mostrar_atendio %}<div class="f"><span>Atendió</span><span>{{ venta.atendio }}</span></div>{% endif %}
   {% if venta.anulada %}<p class="anulada">VENTA ANULADA</p>{% endif %}
   <hr>
   {% for l in venta.lineas.all %}
@@ -53,9 +62,14 @@
   {% if CONF.recibo_mensaje or CONF.recibo_mostrar_aviso and CONF.recibo_aviso %}<hr>{% endif %}
   {% if CONF.recibo_mensaje %}<p class="c">{{ CONF.recibo_mensaje }}</p>{% endif %}
   {% if CONF.recibo_mostrar_aviso and CONF.recibo_aviso %}<p class="c">{{ CONF.recibo_aviso }}</p>{% endif %}
+</section>
+{% endfor %}
 
   {% if not imprimir %}
-  <div class="acciones"><button type="button" onclick="window.print()">Imprimir</button></div>
+  <div class="acciones">
+    <button type="button" onclick="window.print()">{% if dos_copias %}Imprimir las dos copias{% else %}Imprimir{% endif %}</button>
+    {% if dos_copias %}<button type="button" class="sec" onclick="location.href='?copias=1&imprimir=1'">Solo copia del cliente</button>{% endif %}
+  </div>
   {% endif %}
   {% if imprimir %}<script>window.addEventListener('load', function () { window.focus(); window.print(); });</script>{% endif %}
 </body>

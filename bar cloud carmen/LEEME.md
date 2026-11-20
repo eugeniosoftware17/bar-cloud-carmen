@@ -5,7 +5,7 @@ Sistema Django para el negocio de bebidas de Carmen.
 ## Estructura
 - `config/` → configuración del proyecto (settings, urls)
 - `apps/` → un módulo por carpeta (productos, mesas, ventas, inventario…)
-- `templates/` → plantillas HTML (diseño 3B · Comandos)
+- `templates/` → plantillas HTML (diseño Nuevo)
 - `static/` → CSS, JS e imágenes
 - `media/` → archivos subidos (fotos de productos)
 - `.env` → claves y configuración local (no se sube a git; ver `.env.example`)
@@ -43,7 +43,8 @@ Plantillas basadas en `02-DISEÑO/Nuevo` (Bar Cloud, blanco y negro, modo claro/
   más vendidos, cuadre de caja (fondo + ventas en efectivo vs. efectivo contado), nota, hoja impresa de 80 mm
   y lista de cierres anteriores. Se puede actualizar; avisa si hubo ventas después de cerrar.
 - **Configuración** (`apps/configuracion`, solo administrador): nombre que sale en la factura, dirección,
-  teléfono; cobrar o no la propina legal y el ITBIS (y sus porcentajes); textos del recibo (quién atendió,
+  teléfono; cobrar o no la propina legal y el ITBIS (y sus porcentajes); recibo en dos copias (COPIA CLIENTE y
+  COPIA NEGOCIO en la misma impresión, viene activado; `?copias=1` reimprime solo la del cliente); textos del recibo (quién atendió,
   mensaje de despedida y aviso "sin valor fiscal"). Tiene vista previa del recibo.
   `NEGOCIO_NOMBRE` y `NEGOCIO_DIRECCION` del `.env` solo se usan la primera vez.
 - **Usuarios**: crear usuarios, darles permisos por módulo (ver / ver y editar), desactivar y cambiar contraseñas.
@@ -58,6 +59,10 @@ Plantillas basadas en `02-DISEÑO/Nuevo` (Bar Cloud, blanco y negro, modo claro/
 - **Mesas** (`apps/mesas`): 8 mesas iniciales, abrir cuenta, agregar o quitar consumos (aparta el stock entre
   mesas), pre-cuenta impresa, cobrar (misma ventana de cobro que Venta directa, `static/js/caja.js`) y liberar.
   El stock se descuenta al cobrar. La pantalla se actualiza sola cada 30 s para ver lo que hacen otras cajas.
+  Al abrir una mesa se elige **quién la atiende** (mesera): se toca un nombre de la lista o se escribe uno nuevo,
+  que queda guardado. Se puede cambiar con la cuenta abierta y quitar nombres de la lista con la ×.
+  El nombre sale en la tarjeta de la mesa, la pre-cuenta, el recibo ("Atendió") y el historial de ventas,
+  y Reportes muestra ventas, cuentas y propina por mesera.
 
 ## Cómo correrlo (PowerShell)
 ```powershell

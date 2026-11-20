@@ -1,5 +1,6 @@
 """Reglas de las mesas: abrir cuenta, agregar o quitar consumos, liberar y cobrar.
 
+Al abrir una cuenta se elige la mesera que la atiende; su nombre queda guardado en la venta.
 El stock se descuenta al COBRAR (igual que en Venta directa). Mientras la cuenta está abierta,
 lo que ya está pedido en todas las mesas se aparta para no prometer más de lo que hay.
 """
@@ -11,7 +12,7 @@ from django.utils import timezone
 from apps.productos.models import Producto
 from apps.ventas.servicios import VentaError, registrar_venta
 
-from .models import Consumo, Mesa
+from .models import Consumo, Mesa, Mesera
 
 
 class MesaError(Exception):
@@ -33,14 +34,51 @@ def apartado(producto, excepto_mesa=None):
     return qs.aggregate(n=Sum('cantidad'))['n'] or 0
 
 
+def elegir_mesera(mesera_id=None, nombre=''):
+    """Mesera elegida de la lista, o una nueva escrita a mano (si ya existe con ese nombre, se reutiliza)."""
+    nombre = ' '.join(str(nombre or '').split())[:40]
+    if nombre:
+        mesera = Mesera.objects.filter(nombre__iexact=nombre).first()
+        if mesera is None:
+            return Mesera.objects.create(nombre=nombre)
+        if not mesera.activa:
+            mesera.activa = True
+            mesera.save(update_fields=['activa'])
+        return mesera
+    try:
+        mesera = Mesera.objects.filter(pk=int(mesera_id), activa=True).first()
+    except (TypeError, ValueError):
+        mesera = None
+    if mesera is None:
+        raise MesaError('Elige quién va a atender la mesa.')
+    return mesera
+
+
 @transaction.atomic
-def abrir(mesa_id, *, usuario):
+def abrir(mesa_id, *, usuario, mesera_id=None, nombre=''):
+    mesa = _mesa(mesa_id)
+    if mesa.ocupada:
+        raise MesaError(f'{mesa.nombre} ya tiene la cuenta abierta.')
+    mesa.mesera = elegir_mesera(mesera_id, nombre)
+    mesa.abierta_en = timezone.now()
+    mesa.abierta_por = usuario
+    mesa.save(update_fields=['abierta_en', 'abierta_por', 'mesera'])
+    return mesa
+
+
+@transaction.atomic
+def cambiar_mesera(mesa_id, *, mesera_id=None, nombre=''):
     mesa = _mesa(mesa_id)
     if not mesa.ocupada:
-        mesa.abierta_en = timezone.now()
-        mesa.abierta_por = usuario
-        mesa.save(update_fields=['abierta_en', 'abierta_por'])
+        raise MesaError('Primero abre la cuenta.')
+    mesa.mesera = elegir_mesera(mesera_id, nombre)
+    mesa.save(update_fields=['mesera'])
     return mesa
+
+
+def quitar_mesera(mesera_id):
+    """La saca de la lista (las mesas que ya atiende y las ventas guardadas no cambian)."""
+    Mesera.objects.filter(pk=mesera_id).update(activa=False)
 
 
 @transaction.atomic
@@ -69,9 +107,7 @@ def cambiar_consumo(mesa_id, producto_id, delta, *, usuario):
                     raise MesaError(f'{producto.nombre}: agotado (o ya pedido en otras mesas).')
                 raise MesaError(f'Solo quedan {libre} de {producto.nombre}.')
         if not mesa.ocupada:
-            mesa.abierta_en = timezone.now()
-            mesa.abierta_por = usuario
-            mesa.save(update_fields=['abierta_en', 'abierta_por'])
+            raise MesaError('Primero abre la cuenta y elige quién atiende.')
 
     if nuevo <= 0:
         if consumo:
@@ -91,7 +127,8 @@ def liberar(mesa_id):
     mesa.consumos.all().delete()
     mesa.abierta_en = None
     mesa.abierta_por = None
-    mesa.save(update_fields=['abierta_en', 'abierta_por'])
+    mesa.mesera = None
+    mesa.save(update_fields=['abierta_en', 'abierta_por', 'mesera'])
     return mesa
 
 
@@ -103,13 +140,15 @@ def cobrar(mesa_id, *, usuario, metodo, recibido=None, referencia=''):
         raise MesaError('La mesa no tiene consumos.')
     try:
         venta, alertas = registrar_venta(usuario=usuario, lineas=lineas, metodo=metodo,
-                                         recibido=recibido, referencia=referencia, mesa=mesa.nombre)
+                                         recibido=recibido, referencia=referencia, mesa=mesa.nombre,
+                                         mesera=mesa.mesera.nombre if mesa.mesera else '')
     except VentaError as e:
         raise MesaError(str(e))
     mesa.consumos.all().delete()
     mesa.abierta_en = None
     mesa.abierta_por = None
-    mesa.save(update_fields=['abierta_en', 'abierta_por'])
+    mesa.mesera = None
+    mesa.save(update_fields=['abierta_en', 'abierta_por', 'mesera'])
     return venta, alertas
 
 

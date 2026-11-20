@@ -18,6 +18,7 @@ class Venta(models.Model):
     recibido = models.DecimalField('recibido', max_digits=12, decimal_places=2)
     cambio = models.DecimalField('cambio', max_digits=12, decimal_places=2, default=0)
     referencia = models.CharField('referencia', max_length=60, blank=True)
+    mesera = models.CharField('la atendió', max_length=40, blank=True, help_text='Quién atendió la mesa (vacío en venta directa).')
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='ventas', verbose_name='atendió')
 
     anulada = models.BooleanField('anulada', default=False)
@@ -37,6 +38,11 @@ class Venta(models.Model):
     @property
     def numero(self):
         return f'{self.pk:04d}' if self.pk else ''
+
+    @property
+    def atendio(self):
+        """Mesera de la mesa; si no hay, el usuario que cobró."""
+        return self.mesera or self.usuario.get_full_name() or self.usuario.get_username()
 
     @property
     def origen(self):

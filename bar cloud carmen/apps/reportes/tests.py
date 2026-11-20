@@ -40,6 +40,16 @@ class ReportesTests(TestCase):
         tarjeta = next(m for m in e['metodos'] if m['m'] == 'Tarjeta')
         self.assertEqual(tarjeta['total'], 576)
 
+    def test_ventas_por_mesera(self):
+        self.assertEqual(calculos.estadisticas('7')['meseras'], [])
+        registrar_venta(usuario=self.duena, lineas=[{'id': self.ron.pk, 'cantidad': 2}], metodo='Tarjeta', mesa='Mesa 1', mesera='Ana')
+        registrar_venta(usuario=self.duena, lineas=[{'id': self.cerveza.pk, 'cantidad': 1}], metodo='Tarjeta', mesa='Mesa 2', mesera='Ana')
+        registrar_venta(usuario=self.duena, lineas=[{'id': self.agua.pk, 'cantidad': 1}], metodo='Tarjeta', mesa='Mesa 3', mesera='Luisa')
+        m = calculos.estadisticas('7')['meseras']
+        self.assertEqual([(x['mesera'], x['cuentas'], x['neto'], x['propina']) for x in m],
+                         [('Ana', 2, 1050, 105), ('Luisa', 1, 50, 5)])
+        self.assertContains(self.client.get(reverse('reportes:inicio')), 'Por mesera')
+
     def test_series_por_semana_y_mes(self):
         self.assertEqual(len(calculos.serie_ventas('semana')), 8)
         mes = calculos.serie_ventas('mes')

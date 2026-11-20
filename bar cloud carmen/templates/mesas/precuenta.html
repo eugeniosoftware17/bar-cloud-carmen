@@ -24,6 +24,7 @@
   {% if CONF.telefono %}<p class="c">Tel. {{ CONF.telefono }}</p>{% endif %}
   <hr>
   <div class="f"><span>{{ cuenta.mesa.nombre }}</span><span>{% now "d/m/y H:i" %}</span></div>
+  {% if cuenta.mesa.mesera %}<div class="f"><span>Le atiende</span><span>{{ cuenta.mesa.mesera.nombre }}</span></div>{% endif %}
   <p class="c"><b>PRE-CUENTA (no es comprobante)</b></p>
   <hr>
   {% for c in cuenta.lineas %}<div class="f"><span>{{ c.cantidad }} x {{ c.producto.nombre }}</span><span>{{ c.importe|dinero }}</span></div>{% empty %}<p class="c">Sin consumos.</p>{% endfor %}

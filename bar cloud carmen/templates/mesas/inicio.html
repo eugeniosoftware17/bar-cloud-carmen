@@ -45,7 +45,10 @@
      data-estado="{% url 'mesas:estado' %}"
      data-nueva="{% url 'mesas:nueva' %}"
      data-base="{% url 'mesas:inicio' %}"
-     data-en-cuenta="{{ en_cuenta_json }}"></div>
+     data-en-cuenta="{{ en_cuenta_json }}"
+     data-meseras="{{ meseras_json }}"
+     data-mesera-actual="{{ frag.mesera|default:'' }}"
+     data-quitar-mesera="{% url 'mesas:quitar_mesera' 0 %}"></div>
 {% endblock %}
 
 {% block scripts %}
