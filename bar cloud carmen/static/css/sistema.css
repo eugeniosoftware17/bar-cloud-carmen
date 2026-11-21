@@ -95,3 +95,18 @@ a.btn.prim{color:var(--sobre-tinta)}
 /* fotos de productos: que quepan en su cuadro sin tapar el nombre ni el precio */
 .tarjeta .img,.linea .mini,td .mini2{overflow:hidden;min-width:0;grid-template-rows:minmax(0,100%);grid-template-columns:minmax(0,100%)}
 .tarjeta .img img,.linea .mini img,td .mini2 img{display:block;width:100%;height:100%;object-fit:contain}
+
+/* producto · campo de foto con vista previa */
+.foto-campo{display:flex;align-items:center;gap:14px}
+.foto-campo>img{width:72px;height:72px;object-fit:contain;flex:none;border:1px solid var(--borde);border-radius:12px;background:#fff;padding:4px}
+.foto-campo>div{flex:1;min-width:0}
+.foto-campo .check{margin-top:8px}
+
+/* combos: productos que forman el combo (ventana de producto) */
+.oculto{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.modal .combo-caja{border:1px solid var(--borde);border-radius:12px;padding:12px;margin:4px 0 10px;background:var(--panel2)}
+.modal .combo-tit{font-weight:600;margin-bottom:8px}
+.modal .combo-fila{display:grid;grid-template-columns:1fr 84px 38px;gap:8px;align-items:start;margin-bottom:8px}
+.modal .combo-fila select,.modal .combo-fila input{height:46px;margin:0}
+.modal .combo-fila .icono{height:46px}
+.modal .combo-caja .btn.peq{margin:2px 0 8px}

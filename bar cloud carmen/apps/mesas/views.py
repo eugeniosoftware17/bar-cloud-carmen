@@ -70,7 +70,7 @@ def inicio(request):
         'sel': sel,
         'categorias': categorias,
         'categoria_inicial': categorias[0].pk if categorias else None,
-        'productos': Producto.objects.filter(activo=True).select_related('categoria'),
+        'productos': Producto.objects.filter(activo=True).select_related('categoria').prefetch_related('componentes__producto'),
     })
 
 

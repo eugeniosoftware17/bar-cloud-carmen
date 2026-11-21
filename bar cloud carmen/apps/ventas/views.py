@@ -12,6 +12,7 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
 
 from apps.configuracion.models import Configuracion
+from apps.productos.models import Producto
 from apps.usuarios.permisos import puede, requiere, requiere_alguno
 
 from .cierre import cerrar_dia, resumen_dia
@@ -46,7 +47,12 @@ def cobrar(request):
 
 def respuesta_venta(venta, alertas):
     """Lo que la ventana de cobro necesita después de cobrar (Venta directa y Mesas)."""
-    stock = {str(l.producto_id): l.producto.stock for l in venta.lineas.select_related('producto') if l.producto.controla_stock}
+    # stock nuevo de lo que salió del inventario y de los combos que usan esos productos
+    movidos = list(Producto.objects.filter(movimientos__venta=venta).distinct())
+    stock = {str(p.pk): p.stock for p in movidos}
+    for combo in (Producto.objects.filter(es_combo=True, componentes__producto__in=movidos).distinct()
+                  .prefetch_related('componentes__producto')):
+        stock[str(combo.pk)] = combo.stock_js
     return {
         'ok': True,
         'venta': {

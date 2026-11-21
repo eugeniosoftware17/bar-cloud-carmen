@@ -56,7 +56,7 @@ class InventarioTests(TestCase):
 
     def test_producto_nuevo_con_stock_inicial(self):
         self.client.post(reverse('productos:nuevo'), {
-            'nombre': 'Ron', 'categoria': self.beb.pk, 'dibujo': 'ron', 'color': '#7a3b12', 'precio': '450', 'costo': '280',
+            'nombre': 'Ron', 'categoria': self.beb.pk, 'precio': '450', 'costo': '280',
             'stock_minimo': '3', 'stock_inicial': '8', 'controla_stock': 'on', 'activo': 'on'})
         m = Movimiento.objects.get(producto__nombre='Ron')
         self.assertEqual((m.tipo, m.cantidad, m.nota, m.costo), ('entrada', 8, 'Inventario inicial', 280))

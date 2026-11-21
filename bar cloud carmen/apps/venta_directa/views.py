@@ -7,7 +7,7 @@ from apps.usuarios.permisos import requiere
 @requiere('venta_directa')
 def inicio(request):
     categorias = list(Categoria.objects.all())
-    productos = Producto.objects.filter(activo=True).select_related('categoria')
+    productos = Producto.objects.filter(activo=True).select_related('categoria').prefetch_related('componentes__producto')
     return render(request, 'venta_directa/inicio.html', {
         'categorias': categorias,
         'productos': productos,

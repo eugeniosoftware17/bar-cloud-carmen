@@ -9,7 +9,7 @@ from django.db import transaction
 from django.db.models import Max, Sum
 from django.utils import timezone
 
-from apps.productos.models import Producto
+from apps.productos.models import Producto, descomponer
 from apps.ventas.servicios import VentaError, registrar_venta
 
 from .models import Consumo, Mesa, Mesera
@@ -32,6 +32,28 @@ def apartado(producto, excepto_mesa=None):
     if excepto_mesa is not None:
         qs = qs.exclude(mesa=excepto_mesa)
     return qs.aggregate(n=Sum('cantidad'))['n'] or 0
+
+
+def _revisar_stock(mesa, producto, nuevo):
+    """Que lo pedido en esta mesa (con `nuevo` unidades de `producto`) quepa en el stock que no está apartado
+    en otras mesas. Los combos cuentan como los productos que los forman."""
+    usa = descomponer([(producto.pk, 1)])
+    controlados = {p.pk: p for p in Producto.objects.select_for_update().filter(pk__in=usa, controla_stock=True)}
+    if not controlados:
+        return
+    abiertas = Consumo.objects.filter(mesa__abierta_en__isnull=False)
+    otras = descomponer(abiertas.exclude(mesa=mesa).values_list('producto_id', 'cantidad'))
+    aqui = [(pid, cant) for pid, cant in abiertas.filter(mesa=mesa).exclude(producto=producto).values_list('producto_id', 'cantidad')]
+    aqui = descomponer(aqui + [(producto.pk, nuevo)])
+    for pid, p in controlados.items():
+        libre = p.stock - otras.get(pid, 0)
+        if aqui.get(pid, 0) > libre:
+            if producto.es_combo:
+                raise MesaError(f'No alcanza {p.nombre} para otro {producto.nombre} '
+                                f'(quedan {max(libre, 0)}, contando lo pedido en las mesas).')
+            if libre <= 0:
+                raise MesaError(f'{producto.nombre}: agotado (o ya pedido en otras mesas).')
+            raise MesaError(f'Solo quedan {libre} de {producto.nombre}.')
 
 
 def elegir_mesera(mesera_id=None, nombre=''):
@@ -100,12 +122,9 @@ def cambiar_consumo(mesa_id, producto_id, delta, *, usuario):
     if delta > 0:
         if not producto.activo:
             raise MesaError(f'{producto.nombre} está desactivado.')
-        if producto.controla_stock:
-            libre = producto.stock - apartado(producto, excepto_mesa=mesa)
-            if nuevo > libre:
-                if libre <= 0:
-                    raise MesaError(f'{producto.nombre}: agotado (o ya pedido en otras mesas).')
-                raise MesaError(f'Solo quedan {libre} de {producto.nombre}.')
+        if producto.es_combo and not producto.componentes.exists():
+            raise MesaError(f'El combo {producto.nombre} no tiene productos. Agrégalos en Productos.')
+        _revisar_stock(mesa, producto, nuevo)
         if not mesa.ocupada:
             raise MesaError('Primero abre la cuenta y elige quién atiende.')
 

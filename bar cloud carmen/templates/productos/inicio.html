@@ -38,7 +38,7 @@
           <td>{{ p.categoria }}</td>
           <td class="num">{{ p.precio|dinero }}</td>
           {% if admin %}<td class="num">{{ p.costo|dinero }}</td><td class="num">{{ p.margen }}%</td>{% endif %}
-          <td class="num">{% if p.controla_stock %}{{ p.stock }}{% else %}—{% endif %}</td>
+          <td class="num">{% if p.es_combo %}<span title="Combos que alcanzan con el inventario de sus productos">{% if p.disponibles is None %}—{% else %}{{ p.disponibles }}{% endif %}</span>{% elif p.controla_stock %}{{ p.stock }}{% else %}—{% endif %}</td>
           <td>{% estado_producto p %}</td>
         </tr>
         {% empty %}
@@ -61,21 +61,41 @@
     <div class="cuerpo">
       {% if form.non_field_errors %}<div class="alerta">{{ form.non_field_errors|join:' ' }}</div>{% endif %}
       {% include 'productos/_campo.html' with f=form.nombre %}
-      <div class="campos2">
-        <div>{% include 'productos/_campo.html' with f=form.categoria %}</div>
-        <div>{% include 'productos/_campo.html' with f=form.dibujo %}</div>
-        <div>{% include 'productos/_campo.html' with f=form.precio label='Precio de venta (RD$)' %}</div>
-        <div>{% include 'productos/_campo.html' with f=form.costo label='Costo de compra (RD$)' %}</div>
-        {% if form.stock_inicial %}<div>{% include 'productos/_campo.html' with f=form.stock_inicial %}</div>{% endif %}
-        <div>{% include 'productos/_campo.html' with f=form.stock_minimo label='Avisar cuando queden' %}</div>
-        <div>{% include 'productos/_campo.html' with f=form.color %}</div>
-        <div>{% include 'productos/_campo.html' with f=form.foto %}</div>
+      {% include 'productos/_campo.html' with f=form.categoria %}
+      <label class="check">{{ form.es_combo }} Es un combo (se arma con otros productos)</label>
+      <div class="combo-caja" id="comboCaja"{% if not form.es_combo.value %} hidden{% endif %}>
+        {{ form.componentes.management_form }}
+        <p class="combo-tit">Productos del combo</p>
+        <div id="comboFilas">
+          {% for f in form.componentes.forms %}{% include 'productos/_componente.html' %}{% endfor %}
+        </div>
+        <button type="button" class="btn sec peq" id="comboAgregar">+ Agregar producto</button>
+        <p class="ayuda">Al venderlo se descuentan del inventario estos productos. El combo no lleva stock propio: alcanza para lo que permita el producto que se acabe primero. Costo del combo: <b id="comboCosto">RD$ 0</b>.</p>
       </div>
-      {% if producto %}<p class="ayuda">Stock actual: <b>{% if producto.controla_stock %}{{ producto.stock }}{% else %}no controlado{% endif %}</b>. Se cambia con entradas y salidas en Inventario.</p>{% endif %}
-      <label class="check">{{ form.controla_stock }} Controlar inventario de este producto</label>
-      <p class="ayuda">{{ form.controla_stock.help_text }}</p>
+      <template id="comboVacia">{% with f=form.componentes.empty_form %}{% include 'productos/_componente.html' %}{% endwith %}</template>
+      <div class="campos2">
+        <div>{% include 'productos/_campo.html' with f=form.precio label='Precio de venta (RD$)' %}</div>
+        <div data-no-combo>{% include 'productos/_campo.html' with f=form.costo label='Costo de compra (RD$)' %}</div>
+        {% if form.stock_inicial %}<div data-no-combo>{% include 'productos/_campo.html' with f=form.stock_inicial %}</div>{% endif %}
+        <div data-no-combo>{% include 'productos/_campo.html' with f=form.stock_minimo label='Avisar cuando queden' %}</div>
+      </div>
+      <label for="id_foto">Foto</label>
+      <div class="foto-campo">
+        {% if producto.foto %}<img src="{{ producto.foto.url }}" alt="Foto actual de {{ producto.nombre }}">{% endif %}
+        <div>
+          <input type="file" name="foto" id="id_foto" accept="image/*">
+          {% if producto.foto %}<label class="check"><input type="checkbox" name="foto-clear" id="foto-clear_id"> Quitar la foto</label>{% else %}<p class="ayuda">Opcional. Si no tiene foto se muestra un dibujo.</p>{% endif %}
+        </div>
+      </div>
+      {% for e in form.foto.errors %}<p class="campo-error">{{ e }}</p>{% endfor %}
+      <div data-no-combo>
+        {% if producto %}<p class="ayuda">Stock actual: <b>{% if producto.controla_stock %}{{ producto.stock }}{% else %}no controlado{% endif %}</b>. Se cambia con entradas y salidas en Inventario.</p>{% endif %}
+        <label class="check">{{ form.controla_stock }} Controlar inventario de este producto</label>
+        <p class="ayuda">{{ form.controla_stock.help_text }}</p>
+      </div>
       <label class="check">{{ form.activo }} Activo (aparece para vender)</label>
     </div>
+    {{ costos|json_script:'costosProductos' }}
     <div class="acciones fila2">
       <a class="btn sec" href="{% url 'productos:inicio' %}{{ volver }}" id="cancelarProducto">Cancelar</a>
       <button class="btn prim" type="submit">Guardar</button>
@@ -107,6 +127,46 @@
     velo.addEventListener('mousedown', function (e) { if (e.target === velo) location.href = cancelar.href; });
     var err = velo.querySelector('.campo-error');
     if (err) { var i = err.parentNode.querySelector('input,select'); if (i) i.focus(); }
+
+    // combo: mostrar sus productos y esconder lo que no aplica (stock propio, costo de compra)
+    var esCombo = document.getElementById('id_es_combo'), caja = document.getElementById('comboCaja'),
+        filas = document.getElementById('comboFilas'), total = document.getElementById('id_comp-TOTAL_FORMS'),
+        vacia = document.getElementById('comboVacia'), costoTxt = document.getElementById('comboCosto'),
+        costos = JSON.parse(document.getElementById('costosProductos').textContent);
+    function visibles() { return filas.querySelectorAll('.combo-fila:not([hidden])').length; }
+    function agregar() {
+      var n = +total.value;
+      filas.insertAdjacentHTML('beforeend', vacia.innerHTML.replace(/__prefix__/g, n));
+      total.value = n + 1;
+      filas.lastElementChild.querySelector('select').focus();
+    }
+    function calcular() {
+      var s = 0;
+      filas.querySelectorAll('.combo-fila:not([hidden])').forEach(function (f) {
+        var p = f.querySelector('select').value, c = +f.querySelector('input[type=number]').value || 0;
+        if (p && costos[p] !== undefined) s += costos[p] * c;
+      });
+      costoTxt.textContent = 'RD$ ' + Math.round(s).toLocaleString('en-US');
+    }
+    function modo() {
+      var si = esCombo.checked;
+      caja.hidden = !si;
+      velo.querySelectorAll('[data-no-combo]').forEach(function (el) { el.hidden = si; });
+      if (si && !visibles()) agregar();
+    }
+    esCombo.addEventListener('change', modo);
+    document.getElementById('comboAgregar').addEventListener('click', agregar);
+    filas.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-quitar]');
+      if (!b) return;
+      var fila = b.closest('.combo-fila');
+      fila.querySelector('input[name$="-DELETE"]').checked = true;
+      fila.hidden = true;
+      calcular();
+    });
+    filas.addEventListener('input', calcular);
+    filas.addEventListener('change', calcular);
+    modo(); calcular();
   }
 })();
 </script>

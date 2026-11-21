@@ -12,7 +12,7 @@ from django.utils import timezone
 from apps.configuracion.models import Configuracion
 from apps.inventario.models import Movimiento
 from apps.inventario.servicios import mover
-from apps.productos.models import Producto
+from apps.productos.models import ComboItem, Producto
 
 from .models import LineaVenta, Venta
 
@@ -61,10 +61,36 @@ def registrar_venta(*, usuario, lineas, metodo, recibido=None, referencia='', me
     if faltan:
         raise VentaError('Uno de los productos ya no está disponible. Recarga la página.')
 
+    # Los combos se cambian por los productos que los forman: eso es lo que sale del inventario.
+    recetas = {}
+    for item in ComboItem.objects.filter(combo_id__in=[p.pk for p in productos.values() if p.es_combo]):
+        recetas.setdefault(item.combo_id, []).append(item)
+    for p in productos.values():
+        if p.es_combo and p.pk not in recetas:
+            raise VentaError(f'El combo {p.nombre} no tiene productos. Agrégalos en Productos.')
+    salen, en_combo = {}, {}  # producto base → unidades; producto base → nombres de los combos que lo usan
     for pid, cant in cantidades.items():
         p = productos[pid]
+        if p.es_combo:
+            for item in recetas[pid]:
+                salen[item.producto_id] = salen.get(item.producto_id, 0) + item.cantidad * cant
+                en_combo.setdefault(item.producto_id, []).append(p.nombre)
+        else:
+            salen[pid] = salen.get(pid, 0) + cant
+    base = {p.pk: p for p in Producto.objects.select_for_update().filter(pk__in=salen)}
+
+    for pid, cant in salen.items():
+        p = base[pid]
         if p.controla_stock and cant > p.stock:
+            if pid in en_combo:
+                raise VentaError(f'No alcanza {p.nombre} para el combo {en_combo[pid][0]}: '
+                                 + ('está agotado.' if p.stock <= 0 else f'solo quedan {p.stock}.'))
             raise VentaError(f'{p.nombre}: agotado.' if p.stock <= 0 else f'Solo quedan {p.stock} de {p.nombre}.')
+
+    def costo_de(p):
+        if p.es_combo:
+            return sum((base[i.producto_id].costo * i.cantidad for i in recetas[p.pk]), Decimal('0'))
+        return p.costo
 
     subtotal = sum((productos[pid].precio * cant for pid, cant in cantidades.items()), Decimal('0'))
     t = calcular(subtotal)
@@ -86,15 +112,18 @@ def registrar_venta(*, usuario, lineas, metodo, recibido=None, referencia='', me
     )
     LineaVenta.objects.bulk_create([
         LineaVenta(venta=venta, producto=productos[pid], nombre=productos[pid].nombre,
-                   cantidad=cant, precio=productos[pid].precio, costo=productos[pid].costo)
+                   cantidad=cant, precio=productos[pid].precio, costo=costo_de(productos[pid]))
         for pid, cant in cantidades.items()
     ])
 
     alertas = []
-    for pid, cant in cantidades.items():
-        p = productos[pid]
+    for pid, cant in salen.items():
+        p = base[pid]
         if p.controla_stock:
-            mover(p, -cant, tipo=Movimiento.Tipo.VENTA, usuario=usuario, venta=venta, nota=f'Venta #{venta.numero}')
+            nota = f'Venta #{venta.numero}'
+            if pid in en_combo:
+                nota += ' · Combo: ' + ', '.join(dict.fromkeys(en_combo[pid]))
+            mover(p, -cant, tipo=Movimiento.Tipo.VENTA, usuario=usuario, venta=venta, nota=nota)
             if p.stock <= p.stock_minimo:
                 alertas.append(p)
     return venta, alertas
@@ -108,10 +137,10 @@ def anular_venta(venta, *, usuario, motivo):
         raise VentaError('Esta venta ya estaba anulada.')
     if not motivo:
         raise VentaError('Escribe el motivo.')
-    for linea in venta.lineas.select_related('producto'):
-        if linea.producto.controla_stock:
-            mover(linea.producto, linea.cantidad, tipo=Movimiento.Tipo.ANULACION, usuario=usuario, venta=venta,
-                  nota=f'Anulación venta #{venta.numero}')
+    # Se devuelve exactamente lo que salió (incluye los productos de los combos, aunque el combo haya cambiado después).
+    for mov in venta.movimientos.filter(tipo=Movimiento.Tipo.VENTA).select_related('producto').order_by('pk'):
+        mover(mov.producto, -mov.cantidad, tipo=Movimiento.Tipo.ANULACION, usuario=usuario, venta=venta,
+              nota=f'Anulación venta #{venta.numero}')
     venta.anulada = True
     venta.motivo_anulacion = motivo[:200]
     venta.anulada_por = usuario

@@ -1,0 +1,15 @@
+<div class="combo-fila"{% if f.DELETE.value %} hidden{% endif %}>
+  {% for h in f.hidden_fields %}{{ h }}{% endfor %}
+  <span class="oculto">{{ f.DELETE }}</span>
+  <div>
+    <label for="{{ f.producto.id_for_label }}" class="oculto">Producto</label>
+    {{ f.producto }}
+    {% for e in f.producto.errors %}<p class="campo-error">{{ e }}</p>{% endfor %}
+  </div>
+  <div class="combo-cant">
+    <label for="{{ f.cantidad.id_for_label }}" class="oculto">Cantidad</label>
+    {{ f.cantidad }}
+    {% for e in f.cantidad.errors %}<p class="campo-error">{{ e }}</p>{% endfor %}
+  </div>
+  <button type="button" class="icono" data-quitar title="Quitar del combo" aria-label="Quitar del combo"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</div>

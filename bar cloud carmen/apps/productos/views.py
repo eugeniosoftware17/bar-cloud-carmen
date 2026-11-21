@@ -16,7 +16,7 @@ def _filtrar(request):
     q = request.GET.get('q', '').strip()
     cat = request.GET.get('cat', '')
     estado = request.GET.get('estado', '')
-    lista = Producto.objects.select_related('categoria')
+    lista = Producto.objects.select_related('categoria').prefetch_related('componentes__producto')
     if q:
         lista = lista.filter(nombre__icontains=q)
     if cat.isdigit():
@@ -41,6 +41,7 @@ def _pagina(request, form=None, producto=None, status=200):
         'hay_filtros': any(filtros.values()),
         'hay_productos': Producto.objects.exists(),
         'form': form,
+        'costos': {p.pk: float(p.costo) for p in Producto.objects.filter(es_combo=False)} if form else {},
         'producto': producto,
         'volver': _destino(request),
         'admin': puede(request.user, 'productos', 'editar'),

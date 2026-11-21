@@ -21,11 +21,35 @@ class ProductosTests(TestCase):
                                                stock=96, stock_minimo=24, dibujo='cerveza')
 
     def datos(self, **extra):
-        d = {'nombre': 'Ron Brugal', 'categoria': self.bebidas.pk, 'dibujo': 'ron', 'color': '#7a3b12',
+        d = {'nombre': 'Ron Brugal', 'categoria': self.bebidas.pk,
              'precio': '450', 'costo': '280', 'stock_minimo': '3', 'stock_inicial': '8',
              'controla_stock': 'on', 'activo': 'on'}
         d.update(extra)
         return d
+
+    def test_subir_y_quitar_foto(self):
+        import io, shutil, tempfile
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from django.test import override_settings
+        from PIL import Image
+        carpeta = tempfile.mkdtemp()
+        try:
+            self.client.force_login(self.admin)
+            with override_settings(MEDIA_ROOT=carpeta):
+                buf = io.BytesIO(); Image.new('RGB', (20, 60), '#3d8fd6').save(buf, 'PNG')
+                foto = SimpleUploadedFile('agua.png', buf.getvalue(), content_type='image/png')
+                url = reverse('productos:editar', args=[self.cerveza.pk])
+                self.client.post(url, self.datos(nombre='Cerveza Presidente', foto=foto))
+                self.cerveza.refresh_from_db()
+                self.assertTrue(self.cerveza.foto)
+                r = self.client.get(url)
+                self.assertContains(r, 'Quitar la foto')
+                self.assertNotContains(r, 'Color del dibujo')
+                self.client.post(url, self.datos(nombre='Cerveza Presidente', **{'foto-clear': 'on'}))
+                self.cerveza.refresh_from_db()
+                self.assertFalse(self.cerveza.foto)
+        finally:
+            shutil.rmtree(carpeta, ignore_errors=True)
 
     def test_categorias_iniciales(self):
         self.assertEqual(list(Categoria.objects.values_list('nombre', flat=True)), ['Bebidas', 'Comida', 'Snacks', 'Otros'])

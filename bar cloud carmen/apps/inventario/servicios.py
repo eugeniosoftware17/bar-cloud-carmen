@@ -63,6 +63,8 @@ def registrar_entrada(*, producto_id, cantidad, usuario, costo=None, nota='', pr
     if costo > 0 and costo != p.costo:
         p.costo = costo
         p.save(update_fields=['costo', 'actualizado'])
+        from apps.productos.models import actualizar_costo_combos
+        actualizar_costo_combos(p)
     return mover(p, cantidad, tipo=Movimiento.Tipo.ENTRADA, usuario=usuario, nota=nota.strip(), costo=costo, proveedor=proveedor)
 
 

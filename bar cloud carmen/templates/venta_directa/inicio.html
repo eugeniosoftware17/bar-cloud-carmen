@@ -23,11 +23,11 @@
   </div>
   <div class="productos" id="productos">
     {% for p in productos %}
-    <button class="tarjeta{% if p.estado_stock == 'agotado' %} agotado{% endif %}" data-id="{{ p.pk }}" data-cat="{{ p.categoria_id }}" data-nombre="{{ p.nombre }}" data-precio="{{ p.precio|floatformat:'0u' }}" data-stock="{% if p.controla_stock %}{{ p.stock }}{% else %}-1{% endif %}" data-minimo="{{ p.stock_minimo }}"{% if p.categoria_id != categoria_inicial %} hidden{% endif %} aria-label="Agregar {{ p.nombre }}">
+    <button class="tarjeta{% if p.estado_stock == 'agotado' %} agotado{% endif %}" data-id="{{ p.pk }}" data-cat="{{ p.categoria_id }}" data-nombre="{{ p.nombre }}" data-precio="{{ p.precio|floatformat:'0u' }}" data-stock="{{ p.stock_js }}" data-minimo="{{ p.stock_minimo }}"{% if p.categoria_id != categoria_inicial %} hidden{% endif %} aria-label="Agregar {{ p.nombre }}">
       <div class="img">{% imagen_producto p %}</div>
       <div class="nombre">{{ p.nombre }}</div>
       <div class="fila"><span class="precio">{{ p.precio|dinero }}</span><span class="mas">+</span></div>
-      {% if p.estado_stock == 'agotado' %}<span class="tag">Agotado</span>{% elif p.estado_stock == 'bajo' %}<span class="tag">Quedan {{ p.stock }}</span>{% endif %}
+      {% if p.estado_stock == 'agotado' %}<span class="tag">Agotado</span>{% elif p.estado_stock == 'bajo' %}<span class="tag">Quedan {{ p.disponibles }}</span>{% endif %}
     </button>
     {% endfor %}
   </div>
