@@ -4,35 +4,31 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pre-cuenta {{ cuenta.mesa.nombre }}</title>
-<style>
-  @page { size: 80mm auto; margin: 0; }
-  * { box-sizing: border-box; margin: 0; }
-  html { background: #e9e9eb; }
-  body { width: 72mm; margin: 16px auto; padding: 5mm 4mm; background: #fff; color: #000; font: 12px/1.35 "Courier New", monospace; }
-  h1 { font-size: 17px; text-align: center; }
-  .c { text-align: center; }
-  hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
-  .f { display: flex; justify-content: space-between; gap: 8px; }
-  .f span:last-child { white-space: nowrap; }
-  .t { font-size: 15px; font-weight: 700; }
-  @media print { html, body { background: #fff; } body { margin: 0 auto; padding: 4mm 0; } }
-</style>
+{% include 'ventas/_ticket_estilos.html' %}
 </head>
-<body>
+<body class="d-{{ CONF.recibo_estilo.diseno }}">
+<section class="ticket">
   <h1>{{ CONF.nombre|upper }}</h1>
   {% if CONF.direccion %}<p class="c">{{ CONF.direccion }}</p>{% endif %}
   {% if CONF.telefono %}<p class="c">Tel. {{ CONF.telefono }}</p>{% endif %}
   <hr>
   <div class="f"><span>{{ cuenta.mesa.nombre }}</span><span>{% now "d/m/y H:i" %}</span></div>
   {% if cuenta.mesa.mesera %}<div class="f"><span>Le atiende</span><span>{{ cuenta.mesa.mesera.nombre }}</span></div>{% endif %}
-  <p class="c"><b>PRE-CUENTA (no es comprobante)</b></p>
+  <p class="copia">PRE-CUENTA (no es comprobante)</p>
   <hr>
-  {% for c in cuenta.lineas %}<div class="f"><span>{{ c.cantidad }} x {{ c.producto.nombre }}</span><span>{{ c.importe|dinero }}</span></div>{% empty %}<p class="c">Sin consumos.</p>{% endfor %}
+  {% for c in cuenta.lineas %}
+  {% if CONF.recibo_estilo.diseno == 'detallado' %}
+  <div class="item"><b>{{ c.producto.nombre }}</b><div class="f"><span>{{ c.cantidad }} x {{ c.producto.precio|dinero }}</span><span>{{ c.importe|dinero }}</span></div></div>
+  {% else %}
+  <div class="f"><span>{{ c.cantidad }} x {{ c.producto.nombre }}</span><span>{{ c.importe|dinero }}</span></div>
+  {% endif %}
+  {% empty %}<p class="c">Sin consumos.</p>{% endfor %}
   <hr>
   <div class="f"><span>Subtotal</span><span>{{ cuenta.t.subtotal|dinero }}</span></div>
   {% if cuenta.t.propina %}<div class="f"><span>Propina legal</span><span>{{ cuenta.t.propina|dinero }}</span></div>{% endif %}
   {% if cuenta.t.itbis %}<div class="f"><span>ITBIS</span><span>{{ cuenta.t.itbis|dinero }}</span></div>{% endif %}
   <div class="f t"><span>TOTAL</span><span>{{ cuenta.t.total|dinero }}</span></div>
+</section>
   {% if imprimir %}<script>window.addEventListener('load', function () { window.focus(); window.print(); });</script>{% endif %}
 </body>
 </html>

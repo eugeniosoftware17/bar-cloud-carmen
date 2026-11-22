@@ -68,6 +68,7 @@
 </section>
 <div id="config" hidden
      data-cobrar="{% url 'ventas:cobrar' %}"
+     data-precuenta="{% url 'venta_directa:precuenta' %}"
      data-csrf="{{ csrf_token }}"
      data-propina="{{ CONF.tasa_propina|stringformat:'s' }}"
      data-itbis="{{ CONF.tasa_itbis|stringformat:'s' }}"

@@ -110,3 +110,6 @@ a.btn.prim{color:var(--sobre-tinta)}
 .modal .combo-fila select,.modal .combo-fila input{height:46px;margin:0}
 .modal .combo-fila .icono{height:46px}
 .modal .combo-caja .btn.peq{margin:2px 0 8px}
+
+/* configuración: vista previa real del recibo */
+.config-recibo{display:block;width:100%;min-height:440px;border:0;border-radius:10px;background:#e9e9eb}

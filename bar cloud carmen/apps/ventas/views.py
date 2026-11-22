@@ -69,12 +69,25 @@ def respuesta_venta(venta, alertas):
 @requiere_alguno('venta_directa', 'mesas', 'ventas')
 def recibo(request, pk):
     venta = get_object_or_404(Venta.objects.select_related('usuario').prefetch_related('lineas'), pk=pk)
-    dos = Configuracion.obtener().recibo_dos_copias and request.GET.get('copias') != '1'
+    conf = Configuracion.obtener()
+    dos = conf.recibo_dos_copias and request.GET.get('copias') != '1'
+    imprimir = request.GET.get('imprimir') == '1'
+    copias = ['COPIA CLIENTE', 'COPIA NEGOCIO'] if dos else ['']
+    siguiente = ''
+    if dos and conf.recibo_copias_separadas and imprimir:
+        # una copia por impresión: primero la del cliente y, al terminar, la del negocio
+        if request.GET.get('copia') == '2':
+            copias = ['COPIA NEGOCIO']
+        else:
+            copias = ['COPIA CLIENTE']
+            siguiente = reverse('ventas:recibo', args=[venta.pk]) + '?imprimir=1&copia=2'
     return render(request, 'ventas/recibo.html', {
         'venta': venta,
-        'copias': ['COPIA CLIENTE', 'COPIA NEGOCIO'] if dos else [''],
+        'copias': copias,
         'dos_copias': dos,
-        'imprimir': request.GET.get('imprimir') == '1',
+        'separadas': conf.recibo_copias_separadas,
+        'imprimir': imprimir,
+        'siguiente': siguiente,
     })
 
 

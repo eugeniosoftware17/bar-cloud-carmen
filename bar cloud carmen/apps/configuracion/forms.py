@@ -9,7 +9,8 @@ class ConfiguracionForm(forms.ModelForm):
         fields = [
             'nombre', 'direccion', 'telefono',
             'cobrar_propina', 'propina_porcentaje', 'cobrar_itbis', 'itbis_porcentaje',
-            'recibo_dos_copias', 'recibo_mostrar_atendio', 'recibo_mensaje', 'recibo_mostrar_aviso', 'recibo_aviso',
+            'recibo_diseno', 'recibo_letra', 'recibo_ancho',
+            'recibo_dos_copias', 'recibo_copias_separadas', 'recibo_mostrar_atendio', 'recibo_mensaje', 'recibo_mostrar_aviso', 'recibo_aviso',
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={'placeholder': 'Ej.: Bar de Carmen'}),

@@ -1,0 +1,54 @@
+{% with E=CONF.recibo_estilo %}<style>
+  /* Sin tamaño de página fijo: se usa el papel que dice la impresora, así no se corta a la derecha. */
+  @page { margin: 0; }
+  * { box-sizing: border-box; margin: 0; }
+  html { background: #e9e9eb; }
+  body {
+    width: {{ E.pantalla }}; margin: 16px auto; color: #000;
+    font-size: {{ E.letra }}px; line-height: 1.35;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .ticket { padding: 5mm 4mm; background: #fff; }
+  .ticket + .ticket { margin-top: 12px; break-before: page; page-break-before: always; }
+  h1 { text-align: center; line-height: 1.15; overflow-wrap: anywhere; }
+  .c { text-align: center; overflow-wrap: anywhere; }
+  .f { display: flex; flex-wrap: wrap; justify-content: space-between; column-gap: 8px; }
+  .f > span:first-child { overflow-wrap: anywhere; }
+  .f > span:last-child { white-space: nowrap; margin-left: auto; }
+  .copia { text-align: center; font-weight: 700; margin-top: 6px; letter-spacing: .05em; }
+  .anulada { border: 2px solid #000; padding: 3px; font-weight: 700; text-align: center; margin: 6px 0; }
+  .item + .item { margin-top: 4px; }
+  .acciones { margin-top: 14px; display: flex; gap: 8px; font: 14px system-ui, sans-serif; }
+  .acciones button.sec { background: #fff; color: #18181b; border: 1px solid #18181b; }
+  .acciones button { flex: 1; height: 40px; border: 0; border-radius: 10px; background: #18181b; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+
+  /* 1 · Clásico: letra de máquina en negrita (en papel térmico la letra fina sale pálida) */
+  .d-clasico { font-family: "Courier New", Courier, monospace; font-weight: 700; }
+  .d-clasico h1 { font-size: 1.45em; }
+  .d-clasico hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
+  .d-clasico .copia { border: 1px solid #000; padding: 2px; }
+  .d-clasico .t { font-size: 1.3em; }
+
+  /* 2 · Moderno: letra limpia, líneas sólidas y total en negro */
+  .d-moderno { font-family: Arial, Helvetica, sans-serif; font-weight: 600; }
+  .d-moderno h1 { font-size: 1.7em; font-weight: 900; letter-spacing: .02em; }
+  .d-moderno hr { border: 0; border-top: 2px solid #000; margin: 7px 0; }
+  .d-moderno .copia { background: #000; color: #fff; padding: 3px; }
+  .d-moderno .t { background: #000; color: #fff; padding: 5px 6px; margin-top: 4px; font-size: 1.35em; font-weight: 900; }
+
+  /* 3 · Detallado: cada producto con su precio y total bien grande */
+  .d-detallado { font-family: Arial, Helvetica, sans-serif; font-weight: 600; }
+  .d-detallado h1 { font-size: 1.6em; font-weight: 900; }
+  .d-detallado hr { border: 0; border-top: 3px double #000; margin: 7px 0; }
+  .d-detallado .copia { border: 2px solid #000; padding: 2px; }
+  .d-detallado .item b { display: block; font-weight: 800; }
+  .d-detallado .t { font-size: 1.7em; font-weight: 900; padding: 4px 0; border-top: 2px solid #000; border-bottom: 2px solid #000; margin-top: 4px; }
+
+  @media print {
+    html, body { background: #fff; }
+    body { width: {{ E.imprimir }}; margin: 0 auto; padding: {{ E.relleno }}; }
+    .ticket { padding: 3mm 0 6mm; }
+    .ticket + .ticket { margin-top: 0; }
+    .acciones { display: none; }
+  }
+</style>{% endwith %}

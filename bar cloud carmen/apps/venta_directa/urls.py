@@ -6,4 +6,5 @@ app_name = 'venta_directa'
 
 urlpatterns = [
     path('', views.inicio, name='inicio'),
+    path('precuenta/', views.precuenta, name='precuenta'),
 ]

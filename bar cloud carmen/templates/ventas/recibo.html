@@ -4,34 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Recibo venta #{{ venta.numero }}</title>
-<style>
-  @page { size: 80mm auto; margin: 0; }
-  * { box-sizing: border-box; margin: 0; }
-  html { background: #e9e9eb; }
-  body { width: 72mm; margin: 16px auto; color: #000; font: 12px/1.35 "Courier New", monospace; }
-  .ticket { padding: 5mm 4mm; background: #fff; }
-  .ticket + .ticket { margin-top: 12px; break-before: page; page-break-before: always; }
-  .copia { text-align: center; font-weight: 700; border: 1px solid #000; padding: 2px; margin-top: 6px; letter-spacing: .05em; }
-  h1 { font-size: 17px; text-align: center; }
-  .c { text-align: center; }
-  hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
-  .f { display: flex; justify-content: space-between; gap: 8px; }
-  .f span:last-child { white-space: nowrap; }
-  .t { font-size: 15px; font-weight: 700; }
-  .anulada { border: 2px solid #000; padding: 3px; font-weight: 700; text-align: center; margin: 6px 0; }
-  .acciones { margin-top: 14px; display: flex; gap: 8px; font-family: system-ui, sans-serif; }
-  .acciones button.sec { background: #fff; color: #18181b; border: 1px solid #18181b; }
-  .acciones button { flex: 1; height: 40px; border: 0; border-radius: 10px; background: #18181b; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
-  @media print {
-    html, body { background: #fff; }
-    body { margin: 0 auto; }
-    .ticket { padding: 4mm 0; }
-    .ticket + .ticket { margin-top: 0; }
-    .acciones { display: none; }
-  }
-</style>
+{% include 'ventas/_ticket_estilos.html' %}
 </head>
-<body>
+<body class="d-{{ CONF.recibo_estilo.diseno }}">
 {% for copia in copias %}
 <section class="ticket">
   <h1>{{ CONF.nombre|upper }}</h1>
@@ -44,7 +19,11 @@
   {% if venta.anulada %}<p class="anulada">VENTA ANULADA</p>{% endif %}
   <hr>
   {% for l in venta.lineas.all %}
+  {% if CONF.recibo_estilo.diseno == 'detallado' %}
+  <div class="item"><b>{{ l.nombre }}</b><div class="f"><span>{{ l.cantidad }} x {{ l.precio|dinero }}</span><span>{{ l.importe|dinero }}</span></div></div>
+  {% else %}
   <div class="f"><span>{{ l.cantidad }} x {{ l.nombre }}</span><span>{{ l.importe|dinero }}</span></div>
+  {% endif %}
   {% endfor %}
   <hr>
   <div class="f"><span>Subtotal</span><span>{{ venta.subtotal|dinero }}</span></div>
@@ -65,12 +44,23 @@
 </section>
 {% endfor %}
 
-  {% if not imprimir %}
+  {% if not imprimir and not muestra %}
   <div class="acciones">
+    {% if dos_copias and separadas %}
+    <button type="button" onclick="location.href='?imprimir=1'">Imprimir las dos copias</button>
+    {% else %}
     <button type="button" onclick="window.print()">{% if dos_copias %}Imprimir las dos copias{% else %}Imprimir{% endif %}</button>
+    {% endif %}
     {% if dos_copias %}<button type="button" class="sec" onclick="location.href='?copias=1&imprimir=1'">Solo copia del cliente</button>{% endif %}
   </div>
   {% endif %}
-  {% if imprimir %}<script>window.addEventListener('load', function () { window.focus(); window.print(); });</script>{% endif %}
+  {% if imprimir %}<script>
+  window.addEventListener('load', function () {
+    window.focus();
+    window.print();  // espera a que se cierre la ventana de impresión
+    {% if siguiente %}// la otra copia va en una impresión aparte para que la impresora corte entre las dos
+    setTimeout(function () { location.replace('{{ siguiente|escapejs }}'); }, 400);{% endif %}
+  });
+  </script>{% endif %}
 </body>
 </html>

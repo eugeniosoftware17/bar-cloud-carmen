@@ -104,6 +104,23 @@ class Producto(models.Model):
             return 'bajo'
         return 'ok'
 
+    def motivo_no_eliminar(self):
+        """Por qué no se puede eliminar (texto para el usuario), o '' si se puede.
+
+        Solo se eliminan productos sin ventas: las ventas guardadas necesitan su producto para el historial.
+        """
+        ventas = self.lineas_venta.values('venta').distinct().count()
+        if ventas:
+            return (f'{self.nombre} ya se vendió ({ventas} venta{"s" if ventas != 1 else ""}) y se necesita para el historial. '
+                    'Desmarca "Activo" para que no aparezca más para vender.')
+        if self.consumos_mesa.exists():
+            mesas = ', '.join(self.consumos_mesa.values_list('mesa__nombre', flat=True))
+            return f'{self.nombre} está pedido en una cuenta abierta ({mesas}). Quítalo de la cuenta primero.'
+        combos = ', '.join(self.en_combos.values_list('combo__nombre', flat=True))
+        if combos:
+            return f'{self.nombre} forma parte del combo {combos}. Quítalo del combo primero.'
+        return ''
+
     def costo_combo(self):
         """Suma del costo de los productos que forman el combo (con sus costos de hoy)."""
         return sum((c.producto.costo * c.cantidad for c in self.componentes.all()), 0)

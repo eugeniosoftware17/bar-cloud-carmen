@@ -79,16 +79,9 @@
   }
 
   function imprimirPrecuenta() {
-    const t = totales();
-    let r = $('#recibo');
-    if (!r) { r = document.createElement('div'); r.id = 'recibo'; r.setAttribute('aria-hidden', 'true'); document.body.appendChild(r); }
-    const fecha = new Date().toLocaleString('es-DO', { dateStyle: 'short', timeStyle: 'short' });
-    let h = '<h1>' + esc(CFG.negocio).toUpperCase() + '</h1>' + (CFG.direccion ? '<p class="c">' + esc(CFG.direccion) + '</p>' : '') + (CFG.telefono ? '<p class="c">Tel. ' + esc(CFG.telefono) + '</p>' : '') +
-      '<hr><div class="f"><span>Venta directa</span><span>' + fecha + '</span></div><p class="c"><b>PRE-CUENTA (no es comprobante)</b></p><hr>';
-    Object.keys(carrito).forEach(id => { h += '<div class="f"><span>' + carrito[id] + ' x ' + esc(prod[id].n) + '</span><span>' + money(prod[id].p * carrito[id]) + '</span></div>'; });
-    h += '<hr><div class="f"><span>Subtotal</span><span>' + money(t.sub) + '</span></div>' + (t.prop ? '<div class="f"><span>Propina legal</span><span>' + money(t.prop) + '</span></div>' : '') + (t.itbis ? '<div class="f"><span>ITBIS</span><span>' + money(t.itbis) + '</span></div>' : '') + '<div class="f t"><span>TOTAL</span><span>' + money(t.total) + '</span></div>';
-    r.innerHTML = h;
-    window.print();
+    // la arma el servidor con el mismo diseño del recibo (Configuración)
+    const p = Object.keys(carrito).map(id => id + ':' + carrito[id]).join(',');
+    if (p) window.Caja.imprimirUrl(CFG.precuenta + '?imprimir=1&p=' + encodeURIComponent(p));
   }
 
   function cobrar() {

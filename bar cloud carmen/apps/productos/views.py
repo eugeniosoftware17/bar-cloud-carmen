@@ -31,7 +31,7 @@ def _filtrar(request):
     return lista, filtros
 
 
-def _pagina(request, form=None, producto=None, status=200):
+def _pagina(request, form=None, producto=None, status=200, eliminar=False, motivo=''):
     lista, filtros = _filtrar(request)
     return render(request, 'productos/inicio.html', {
         'productos': lista,
@@ -43,6 +43,8 @@ def _pagina(request, form=None, producto=None, status=200):
         'form': form,
         'costos': {p.pk: float(p.costo) for p in Producto.objects.filter(es_combo=False)} if form else {},
         'producto': producto,
+        'eliminar': eliminar,
+        'motivo': motivo,
         'volver': _destino(request),
         'admin': puede(request.user, 'productos', 'editar'),
     }, status=status)
@@ -87,3 +89,28 @@ def editar(request, pk):
             return _volver(request)
         return _pagina(request, form=form, producto=producto, status=400)
     return _pagina(request, form=ProductoForm(instance=producto), producto=producto)
+
+
+@requiere('productos', 'editar')
+def eliminar(request, pk):
+    """Elimina un producto creado por error. Si ya se vendió (o está en una mesa o en un combo) no se puede: se desactiva."""
+    from apps.inventario.models import Movimiento
+
+    producto = get_object_or_404(Producto, pk=pk)
+    if request.method == 'POST':
+        with transaction.atomic():
+            producto = get_object_or_404(Producto.objects.select_for_update(), pk=pk)
+            motivo = producto.motivo_no_eliminar()
+            if not motivo:
+                nombre = producto.nombre
+                # sin ventas, sus movimientos solo pueden ser entradas o ajustes de este producto equivocado
+                Movimiento.objects.filter(producto=producto).delete()
+                foto = producto.foto.name if producto.foto else ''
+                producto.delete()
+        if motivo:
+            return _pagina(request, producto=producto, eliminar=True, motivo=motivo, status=400)
+        if foto:
+            transaction.on_commit(lambda: Producto._meta.get_field('foto').storage.delete(foto))
+        messages.success(request, f'Producto {nombre} eliminado')
+        return _volver(request)
+    return _pagina(request, producto=producto, eliminar=True, motivo=producto.motivo_no_eliminar())

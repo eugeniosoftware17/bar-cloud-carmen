@@ -94,11 +94,33 @@
         <p class="ayuda">{{ form.controla_stock.help_text }}</p>
       </div>
       <label class="check">{{ form.activo }} Activo (aparece para vender)</label>
+      {% if producto %}<p style="margin-top:14px"><a class="btn peligro fino" href="{% url 'productos:eliminar' producto.pk %}{% if volver %}?volver={{ volver|urlencode }}{% endif %}">Eliminar producto</a></p>{% endif %}
     </div>
     {{ costos|json_script:'costosProductos' }}
     <div class="acciones fila2">
       <a class="btn sec" href="{% url 'productos:inicio' %}{{ volver }}" id="cancelarProducto">Cancelar</a>
       <button class="btn prim" type="submit">Guardar</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+{% if eliminar %}
+<div class="velo" id="veloProducto">
+  <form class="modal" role="dialog" aria-modal="true" aria-labelledby="tituloEliminar" method="post" action="{% url 'productos:eliminar' producto.pk %}">
+    {% csrf_token %}
+    <input type="hidden" name="volver" value="{{ volver }}">
+    <h2 id="tituloEliminar">Eliminar producto</h2>
+    <div class="cuerpo">
+      {% if motivo %}
+      <div class="alerta">No se puede eliminar. {{ motivo }}</div>
+      {% else %}
+      <p class="mmetodo">Se elimina <b>{{ producto.nombre }}</b>{% if producto.controla_stock and producto.stock %} junto con sus {{ producto.stock }} unidades y sus movimientos de inventario{% endif %}. Úsalo solo para productos creados por error. No se puede deshacer.</p>
+      {% endif %}
+    </div>
+    <div class="acciones fila2">
+      <a class="btn sec" href="{% url 'productos:editar' producto.pk %}{% if volver %}?volver={{ volver|urlencode }}{% endif %}" id="cancelarProducto">Volver</a>
+      {% if not motivo %}<button class="btn prim" type="submit">Eliminar</button>{% endif %}
     </div>
   </form>
 </div>
@@ -128,8 +150,11 @@
     var err = velo.querySelector('.campo-error');
     if (err) { var i = err.parentNode.querySelector('input,select'); if (i) i.focus(); }
 
-    // combo: mostrar sus productos y esconder lo que no aplica (stock propio, costo de compra)
-    var esCombo = document.getElementById('id_es_combo'), caja = document.getElementById('comboCaja'),
+  }
+  // combo: mostrar sus productos y esconder lo que no aplica (stock propio, costo de compra)
+  var esCombo = document.getElementById('id_es_combo');
+  if (esCombo) {
+    var caja = document.getElementById('comboCaja'),
         filas = document.getElementById('comboFilas'), total = document.getElementById('id_comp-TOTAL_FORMS'),
         vacia = document.getElementById('comboVacia'), costoTxt = document.getElementById('comboCosto'),
         costos = JSON.parse(document.getElementById('costosProductos').textContent);

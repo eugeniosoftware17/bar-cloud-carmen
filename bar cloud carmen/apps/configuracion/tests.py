@@ -21,6 +21,7 @@ class ConfiguracionTests(TestCase):
     def datos(self, **extra):
         d = {'nombre': 'Bar de Carmen', 'direccion': 'Santiago', 'telefono': '809-555-0101',
              'cobrar_propina': 'on', 'propina_porcentaje': '10', 'cobrar_itbis': 'on', 'itbis_porcentaje': '18',
+             'recibo_diseno': 'clasico', 'recibo_letra': 'grande', 'recibo_ancho': 'auto',
              'recibo_mostrar_atendio': 'on', 'recibo_mensaje': '¡Gracias por su visita!',
              'recibo_mostrar_aviso': 'on', 'recibo_aviso': 'Recibo interno · sin valor fiscal'}
         d.update(extra)

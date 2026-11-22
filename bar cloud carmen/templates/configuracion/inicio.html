@@ -39,8 +39,15 @@
 
         <section class="tarj">
           <h3>Recibo</h3>
-          <p class="nota">Elige cuántas copias se imprimen y qué textos salen en el recibo.</p>
+          <p class="nota">Elige el diseño, el tamaño de la letra, las copias y los textos del recibo. A la derecha ves cómo queda.</p>
+          {% include 'productos/_campo.html' with f=form.recibo_diseno label='Diseño' %}
+          <div class="campos2">
+            <div>{% include 'productos/_campo.html' with f=form.recibo_letra label='Tamaño de letra' %}</div>
+            <div>{% include 'productos/_campo.html' with f=form.recibo_ancho label='Ancho del papel' %}</div>
+          </div>
+          <p class="nota">{{ form.recibo_ancho.help_text }}</p>
           <label class="check">{{ form.recibo_dos_copias }} Imprimir dos copias: una para el cliente y otra para el negocio</label>
+          <label class="check">{{ form.recibo_copias_separadas }} Imprimir cada copia por separado (la impresora corta entre una y otra)</label>
           <label class="check">{{ form.recibo_mostrar_atendio }} Mostrar quién atendió</label>
           {% include 'productos/_campo.html' with f=form.recibo_mensaje %}
           <label class="check">{{ form.recibo_mostrar_aviso }} Mostrar aviso al pie</label>
@@ -56,7 +63,7 @@
       <aside class="tarj config-vista" aria-label="Vista previa del recibo">
         <h3>Vista previa del recibo</h3>
         <p class="nota">Así se verá con una venta de ejemplo de RD$ 300.</p>
-        <div class="ticket" id="ticket" aria-live="polite"></div>
+        <iframe class="config-recibo" id="vistaRecibo" title="Vista previa del recibo" src="{% url 'configuracion:muestra_recibo' %}"></iframe>
       </aside>
     </div>
   </form>
@@ -69,38 +76,30 @@
   'use strict';
   var f = document.getElementById('formConfig');
   var campo = function (n) { return f.elements[n]; };
-  var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
-  var money = function (n) { return 'RD$ ' + Math.round(n).toLocaleString('en-US'); };
-  var fila = function (a, b, cls) { return '<div class="f' + (cls ? ' ' + cls : '') + '"><span>' + a + '</span><span>' + b + '</span></div>'; };
+  var vista = document.getElementById('vistaRecibo'), base = vista.getAttribute('src'), espera;
 
   function pintar() {
     // porcentajes solo se editan si el cargo está activo
     campo('propina_porcentaje').disabled = !campo('cobrar_propina').checked;
     campo('itbis_porcentaje').disabled = !campo('cobrar_itbis').checked;
     campo('recibo_aviso').disabled = !campo('recibo_mostrar_aviso').checked;
+    campo('recibo_copias_separadas').disabled = !campo('recibo_dos_copias').checked;
 
-    var sub = 300;
-    var prop = campo('cobrar_propina').checked ? Math.round(sub * (parseFloat(campo('propina_porcentaje').value) || 0) / 100) : 0;
-    var itb = campo('cobrar_itbis').checked ? Math.round(sub * (parseFloat(campo('itbis_porcentaje').value) || 0) / 100) : 0;
-    var nombre = campo('nombre').value.trim() || 'Nombre del negocio';
-    var h = '<b class="c t">' + esc(nombre.toUpperCase()) + '</b>';
-    if (campo('direccion').value.trim()) h += '<p class="c">' + esc(campo('direccion').value.trim()) + '</p>';
-    if (campo('telefono').value.trim()) h += '<p class="c">Tel. ' + esc(campo('telefono').value.trim()) + '</p>';
-    if (campo('recibo_dos_copias').checked) h += '<p class="c"><b>COPIA CLIENTE</b></p>';
-    h += '<hr>' + fila('Directa · Venta #0001', '19/11/26 16:23');
-    if (campo('recibo_mostrar_atendio').checked) h += fila('Atendió', 'admin');
-    h += '<hr>' + fila('2 x Cerveza Presidente', money(sub)) + '<hr>' + fila('Subtotal', money(sub));
-    if (prop) h += fila('Propina legal', money(prop));
-    if (itb) h += fila('ITBIS', money(itb));
-    h += fila('TOTAL', money(sub + prop + itb), 't') + '<hr>' + fila('Pago', 'Efectivo');
-    var msg = campo('recibo_mensaje').value.trim();
-    var aviso = campo('recibo_mostrar_aviso').checked ? campo('recibo_aviso').value.trim() : '';
-    if (msg || aviso) h += '<hr>';
-    if (msg) h += '<p class="c">' + esc(msg) + '</p>';
-    if (aviso) h += '<p class="c">' + esc(aviso) + '</p>';
-    if (campo('recibo_dos_copias').checked) h += '<hr><p class="c">Se imprime también la COPIA NEGOCIO.</p>';
-    document.getElementById('ticket').innerHTML = h;
+    // la vista previa es el recibo real, dibujado con lo que está escrito (sin guardar)
+    clearTimeout(espera);
+    espera = setTimeout(function () {
+      var datos = new URLSearchParams();
+      f.querySelectorAll('input, select, textarea').forEach(function (i) {
+        if (!i.name || i.name === 'csrfmiddlewaretoken' || i.type === 'file') return;
+        if ((i.type === 'checkbox' || i.type === 'radio') && !i.checked) return;
+        datos.append(i.name, i.value);
+      });
+      vista.src = base + '?' + datos.toString();
+    }, 250);
   }
+  vista.addEventListener('load', function () {
+    try { vista.style.height = (vista.contentDocument.documentElement.scrollHeight + 4) + 'px'; } catch (e) {}
+  });
   f.addEventListener('input', pintar);
   f.addEventListener('change', pintar);
   // los campos desactivados no se envían: se reactivan al guardar para no perder el valor
