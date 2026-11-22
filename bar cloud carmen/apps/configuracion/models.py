@@ -41,6 +41,9 @@ class Configuracion(models.Model):
     recibo_letra = models.CharField('tamaño de letra', max_length=10, choices=Letra.choices, default=Letra.GRANDE)
     recibo_ancho = models.CharField('ancho del papel', max_length=4, choices=Ancho.choices, default=Ancho.AUTO,
                                     help_text='Si el recibo sale cortado a la derecha, prueba con 58 mm.')
+    recibo_imprimir_al_cobrar = models.BooleanField(
+        'imprimir al cobrar', default=True,
+        help_text='El recibo se manda a la impresora apenas se cobra, sin tocar ningún botón.')
     recibo_dos_copias = models.BooleanField('imprimir dos copias', default=True,
                                             help_text='Una para el cliente y otra para el negocio.')
     recibo_copias_separadas = models.BooleanField(

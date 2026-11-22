@@ -46,12 +46,25 @@
             <div>{% include 'productos/_campo.html' with f=form.recibo_ancho label='Ancho del papel' %}</div>
           </div>
           <p class="nota">{{ form.recibo_ancho.help_text }}</p>
+          <label class="check">{{ form.recibo_imprimir_al_cobrar }} Imprimir el recibo apenas se cobra (sin tocar ningún botón)</label>
           <label class="check">{{ form.recibo_dos_copias }} Imprimir dos copias: una para el cliente y otra para el negocio</label>
           <label class="check">{{ form.recibo_copias_separadas }} Imprimir cada copia por separado (la impresora corta entre una y otra)</label>
           <label class="check">{{ form.recibo_mostrar_atendio }} Mostrar quién atendió</label>
           {% include 'productos/_campo.html' with f=form.recibo_mensaje %}
           <label class="check">{{ form.recibo_mostrar_aviso }} Mostrar aviso al pie</label>
           {% include 'productos/_campo.html' with f=form.recibo_aviso %}
+        </section>
+
+        <section class="tarj">
+          <h3>Impresión directa en la caja</h3>
+          <p class="nota">Para que el recibo salga de inmediato por la <b>impresora predeterminada</b> de Windows, sin la ventana de imprimir, abre el sistema con este acceso en la computadora de la caja.</p>
+          <a class="btn sec peq" href="{% url 'configuracion:acceso_caja' %}" download>Descargar acceso “Bar Cloud - Caja”</a>
+          <ol class="pasos">
+            <li>En Windows, pon la impresora de recibos como <b>predeterminada</b> (Configuración → Impresoras y escáneres).</li>
+            <li>Descarga el acceso y muévelo al <b>Escritorio</b>. Si Windows pregunta, elige <b>Conservar</b> y luego <b>Ejecutar de todas formas</b>.</li>
+            <li>Abre Bar Cloud siempre con ese acceso. La primera vez tendrás que iniciar sesión.</li>
+          </ol>
+          <p class="nota">Funciona con Google Chrome o Microsoft Edge. Si abres el sistema de otra forma, se seguirá viendo la ventana de imprimir.</p>
         </section>
 
         <div class="filtros">

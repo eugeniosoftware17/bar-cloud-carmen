@@ -9,7 +9,7 @@ class ConfiguracionForm(forms.ModelForm):
         fields = [
             'nombre', 'direccion', 'telefono',
             'cobrar_propina', 'propina_porcentaje', 'cobrar_itbis', 'itbis_porcentaje',
-            'recibo_diseno', 'recibo_letra', 'recibo_ancho',
+            'recibo_diseno', 'recibo_letra', 'recibo_ancho', 'recibo_imprimir_al_cobrar',
             'recibo_dos_copias', 'recibo_copias_separadas', 'recibo_mostrar_atendio', 'recibo_mensaje', 'recibo_mostrar_aviso', 'recibo_aviso',
         ]
         widgets = {

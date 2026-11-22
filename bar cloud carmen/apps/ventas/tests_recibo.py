@@ -73,6 +73,23 @@ class ReciboTests(TestCase):
         self.assertContains(r, 'COPIA NEGOCIO')
         self.assertEqual(Configuracion.obtener().recibo_diseno, 'clasico')  # la vista previa no guarda
 
+    def test_imprimir_al_cobrar(self):
+        import json
+        cobrar = lambda: self.client.post(reverse('ventas:cobrar'), json.dumps({
+            'metodo': 'Tarjeta', 'lineas': [{'id': self.agua.pk, 'cantidad': 1}]}), content_type='application/json').json()
+        self.assertTrue(cobrar()['imprimir_auto'])
+        self.conf(recibo_imprimir_al_cobrar=False)
+        self.assertFalse(cobrar()['imprimir_auto'])
+
+    def test_descargar_acceso_caja_con_impresion_directa(self):
+        r = self.client.get(reverse('configuracion:acceso_caja'))
+        self.assertEqual(r['Content-Disposition'], 'attachment; filename="Bar Cloud - Caja.bat"')
+        texto = r.content.decode('ascii')
+        self.assertIn('--kiosk-printing', texto)
+        self.assertIn('set "URL=http://testserver' + reverse('venta_directa:inicio') + '"', texto)
+        self.assertIn('\r\n', texto)  # Windows necesita CRLF en los .bat
+        self.assertContains(self.client.get(reverse('configuracion:inicio')), 'Descargar acceso')
+
     def test_precuenta_venta_directa_usa_el_diseno(self):
         self.conf(recibo_diseno='detallado')
         r = self.client.get(reverse('venta_directa:precuenta'), {'p': f'{self.agua.pk}:3,abc,999:1'})

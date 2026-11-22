@@ -110,8 +110,10 @@
 
   function listo(res) {
     const v = res.venta, ef = v.metodo === 'Efectivo';
+    // Configuración → "Imprimir al cobrar": el recibo sale solo (sin ventana si la caja usa el acceso "Bar Cloud - Caja")
+    if (res.imprimir_auto) imprimirUrl(res.recibo + '?imprimir=1');
     modal({
-      titulo: 'Venta #' + v.numero + ' registrada', ok: 'Listo', cancelar: 'Imprimir recibo', ancho: 'chico',
+      titulo: 'Venta #' + v.numero + ' registrada', ok: 'Listo', cancelar: res.imprimir_auto ? 'Imprimir otra vez' : 'Imprimir recibo', ancho: 'chico',
       html: '<p class="mtotal">' + money(v.total) + '</p><p class="mmetodo fuerte">' + (ef ? 'Cambio a devolver: <b>' + money(v.cambio) + '</b>' : 'Pagado con ' + v.metodo.toLowerCase()) + '</p>' +
         (res.alertas && res.alertas.length ? '<p class="alerta">Queda poco: ' + res.alertas.map(esc).join(', ') + '</p>' : ''),
       onAbrir(m) { setTimeout(() => $('[data-x=ok]', m).focus(), 40); },

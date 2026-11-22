@@ -2,7 +2,9 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 from django.contrib import messages
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 
@@ -30,6 +32,43 @@ def inicio(request):
     else:
         status = 200
     return render(request, 'configuracion/inicio.html', {'form': form, 'conf': conf}, status=status)
+
+
+ACCESO_CAJA = r'''@echo off
+rem Bar Cloud - Caja
+rem Abre el sistema con impresion directa: recibos y pre-cuentas salen de inmediato
+rem por la impresora PREDETERMINADA de Windows, sin la ventana de imprimir.
+rem Usa un perfil aparte del navegador para que la impresion directa siempre funcione.
+
+set "URL={url}"
+set "PERFIL=%LOCALAPPDATA%\BarCloudCaja"
+set "NAV="
+if exist "%ProgramFiles%\Google\Chrome\Application\chrome.exe" set "NAV=%ProgramFiles%\Google\Chrome\Application\chrome.exe"
+if not defined NAV if exist "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe" set "NAV=%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"
+if not defined NAV if exist "%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe" set "NAV=%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"
+if not defined NAV if exist "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe" set "NAV=%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
+if not defined NAV if exist "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe" set "NAV=%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"
+if not defined NAV goto sinnavegador
+
+start "" "%NAV%" --kiosk-printing --user-data-dir="%PERFIL%" --no-first-run --no-default-browser-check --start-maximized --app="%URL%"
+exit /b 0
+
+:sinnavegador
+echo No se encontro Google Chrome ni Microsoft Edge en este equipo.
+echo Instala Google Chrome y vuelve a abrir este archivo.
+pause
+exit /b 1
+'''
+
+
+@requiere('configuracion')
+def acceso_caja(request):
+    """Descarga "Bar Cloud - Caja.bat": abre el sistema con impresión directa en la impresora predeterminada."""
+    url = request.build_absolute_uri(reverse('venta_directa:inicio'))
+    contenido = ACCESO_CAJA.replace('{url}', url).replace('\r\n', '\n').replace('\n', '\r\n')
+    resp = HttpResponse(contenido.encode('ascii', 'ignore'), content_type='application/octet-stream')
+    resp['Content-Disposition'] = 'attachment; filename="Bar Cloud - Caja.bat"'
+    return resp
 
 
 @xframe_options_sameorigin  # se muestra dentro de la página de Configuración

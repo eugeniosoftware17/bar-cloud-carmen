@@ -60,6 +60,7 @@ def respuesta_venta(venta, alertas):
             'total': float(venta.total), 'cambio': float(venta.cambio),
         },
         'recibo': reverse('ventas:recibo', args=[venta.pk]),
+        'imprimir_auto': Configuracion.obtener().recibo_imprimir_al_cobrar,
         'alertas': [f'{p.nombre} ({p.stock})' for p in alertas],
         'stock': stock,
     }
